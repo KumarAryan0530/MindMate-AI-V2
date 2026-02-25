@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-phone-volume"></i> Call Details
+                </h2>
+                <a href="{% url 'voice_calls:history' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to History
+                </a>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Call Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Call Started:</strong> 
+                                {{ call.call_started_at|date:"M d, Y - g:i A" }}
+                            </p>
+                            <p><strong>Duration:</strong> {{ call.duration_formatted }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{% if call.call_status == 'completed' %}success{% else %}warning{% endif %}">
+                                    {{ call.call_status|default:"Unknown" }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Sentiment:</strong> 
+                                {% if call.overall_sentiment %}
+                                    <span class="badge bg-{% if call.overall_sentiment == 'positive' %}success{% elif call.overall_sentiment == 'negative' %}danger{% else %}info{% endif %}">
+                                        {{ call.overall_sentiment|title }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Not analyzed</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Emotional Score:</strong> 
+                                {% if call.emotional_score %}
+                                    {{ call.emotional_score|floatformat:1 }}/25
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Twilio Call ID:</strong> 
+                                <small class="text-muted">{{ call.twilio_call_sid }}</small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if call.user_transcript or call.agent_responses %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-comments"></i> Conversation Transcript</h5>
+                </div>
+                <div class="card-body">
+                    {% if call.user_transcript %}
+                    <div class="mb-3">
+                        <h6 class="text-primary"><i class="fas fa-user"></i> You:</h6>
+                        <p class="ms-3">{{ call.user_transcript }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if call.agent_responses %}
+                    <div class="mb-3">
+                        <h6 class="text-success"><i class="fas fa-robot"></i> SafeMind AI:</h6>
+                        <p class="ms-3">{{ call.agent_responses }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> 
+                No transcript available for this call.
+            </div>
+            {% endif %}
+            
+            {% if call.sentiment %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Sentiment Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded">
+                                <h6 class="text-success">Positive</h6>
+                                <h3>{{ call.sentiment.positive_score|floatformat:1 }}</h3>
+                                <small class="text-muted">out of 25</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded">
+                                <h6 class="text-info">Neutral</h6>
+                                <h3>{{ call.sentiment.neutral_score|floatformat:1 }}</h3>
+                                <small class="text-muted">out of 25</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded">
+                                <h6 class="text-danger">Negative</h6>
+                                <h3>{{ call.sentiment.negative_score|floatformat:1 }}</h3>
+                                <small class="text-muted">out of 25</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if call.sentiment.emotions_detected %}
+                    <div class="mt-3">
+                        <strong>Emotions Detected:</strong>
+                        {% for emotion in call.sentiment.emotions_detected %}
+                            <span class="badge bg-light text-dark">{{ emotion }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <strong>Analysis Confidence:</strong> 
+                        {{ call.sentiment.analysis_confidence|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="d-grid">
+                <a href="{% url 'voice_calls:history' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Call History
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

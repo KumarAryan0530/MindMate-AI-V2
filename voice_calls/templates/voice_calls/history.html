@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <h2 class="mb-4">
+                <i class="fas fa-history"></i> Voice Call History
+            </h2>
+            
+            <div class="mb-3">
+                <a href="{% url 'voice_calls:schedule' %}" class="btn btn-primary">
+                    <i class="fas fa-calendar-plus"></i> Schedule New Call
+                </a>
+            </div>
+            
+            {% if calls %}
+            <div class="table-responsive">
+                <table class="table table-hover shadow-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Sentiment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for call in calls %}
+                        <tr>
+                            <td>
+                                {% if call.call_started_at %}
+                                    {{ call.call_started_at|date:"M d, Y - g:i A" }}
+                                {% else %}
+                                    <span class="text-muted">Not started</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if call.duration_seconds %}
+                                    {{ call.duration_formatted }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if call.schedule.status == 'completed' %}success{% elif call.schedule.status == 'failed' %}danger{% elif call.schedule.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                                    {{ call.schedule.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if call.overall_sentiment %}
+                                    <span class="badge bg-{% if call.overall_sentiment == 'positive' %}success{% elif call.overall_sentiment == 'negative' %}danger{% else %}info{% endif %}">
+                                        {{ call.overall_sentiment|title }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'voice_calls:call_detail' call.id %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center" role="alert">
+                <i class="fas fa-info-circle fa-3x mb-3"></i>
+                <h4>No Call History Yet</h4>
+                <p>You haven't had any wellness check-in calls yet.</p>
+                <a href="{% url 'voice_calls:schedule' %}" class="btn btn-primary mt-2">
+                    Schedule Your First Call
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

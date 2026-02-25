@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">
+                <svg class="w-8 h-8 inline-block mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                Wellness Check-in Calls
+            </h1>
+            <p class="mt-2 text-lg text-gray-600">
+                Connect with our AI wellness companion for supportive conversations about your mental health
+            </p>
+        </div>
+
+        {% if not user.profile.phone_number %}
+        <!-- Phone Number Alert -->
+        <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+            <div class="flex">
+                <svg class="h-6 w-6 text-yellow-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <div class="flex-1">
+                    <h3 class="text-sm font-medium text-yellow-800">Phone Number Required</h3>
+                    <p class="mt-1 text-sm text-yellow-700">
+                        Please add your phone number to your profile before scheduling wellness calls.
+                    </p>
+                    <a href="{% url 'profile' %}" class="mt-2 inline-flex items-center text-sm font-medium text-yellow-800 hover:text-yellow-900">
+                        Go to Profile
+                        <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content -->
+            <div class="lg:col-span-2">
+                <!-- Call Options Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Call Now Card
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl shadow-lg p-6 text-white transform transition hover:scale-105 cursor-pointer" onclick="showCallNowModal()">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="bg-white bg-opacity-20 rounded-full p-3">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                </svg>
+                            </div>
+                            <span class="bg-yellow-400 text-purple-900 text-xs font-bold px-3 py-1 rounded-full">INSTANT</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Call Now</h3>
+                        <p class="text-purple-100 mb-4">Get immediate support. We'll call you within 2 minutes.</p>
+                        <div class="flex items-center text-sm text-purple-200">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                            </svg>
+                            5-10 minutes conversation
+                        </div>
+                    </div> -->
+
+                    <!-- Schedule Later Card -->
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-6 text-white transform transition hover:scale-105 cursor-pointer" onclick="showScheduleModal()">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="bg-white bg-opacity-20 rounded-full p-3">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <span class="bg-green-400 text-blue-900 text-xs font-bold px-3 py-1 rounded-full">AVAILABLE</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Schedule Now</h3>
+                        <p class="text-blue-100 mb-4">Pick a convenient time for your wellness check-in.</p>
+                        <div class="flex items-center text-sm text-blue-200">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                            </svg>
+                            Choose date & time
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How It Works -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        How It Works
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-purple-100 text-purple-600 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">1</div>
+                            <div class="ml-4">
+                                <h4 class="font-semibold text-gray-900">Choose Your Option</h4>
+                                <p class="text-gray-600 text-sm">Select  "Schedule Now" to pick a time</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-purple-100 text-purple-600 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">2</div>
+                            <div class="ml-4">
+                                <h4 class="font-semibold text-gray-900">Receive the Call</h4>
+                                <p class="text-gray-600 text-sm">Our AI will call you from: <strong>+1 (848) 260-2024</strong></p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-purple-100 text-purple-600 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">3</div>
+                            <div class="ml-4">
+                                <h4 class="font-semibold text-gray-900">Have a Conversation</h4>
+                                <p class="text-gray-600 text-sm">Talk naturally with our empathetic AI about your feelings and mood</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-purple-100 text-purple-600 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">4</div>
+                            <div class="ml-4">
+                                <h4 class="font-semibold text-gray-900">Review & Insights</h4>
+                                <p class="text-gray-600 text-sm">Check your call history for transcripts and sentiment analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Upcoming Calls -->
+                {% if upcoming_calls %}
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        Upcoming Calls
+                    </h3>
+                    <div class="space-y-3">
+                        {% for call in upcoming_calls %}
+                        <div class="border-l-4 border-blue-500 bg-blue-50 p-3 rounded-r">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-semibold text-gray-900">{{ call.scheduled_time|date:"M d, g:i A" }}</p>
+                                    <p class="text-sm text-gray-600">{{ call.phone_number }}</p>
+                                </div>
+                                <button onclick="cancelCall({{ call.id }})" class="text-red-600 hover:text-red-800 text-sm">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="inline-block mt-2 px-2 py-1 text-xs font-semibold rounded-full
+                                {% if call.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif call.status == 'in_progress' %}bg-blue-100 text-blue-800
+                                {% endif %}">
+                                {{ call.get_status_display }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+                    <div class="space-y-2">
+                        <a href="{% url 'voice_calls:history' %}" class="block w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition flex items-center">
+                            <svg class="w-5 h-5 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="text-gray-700">View Call History</span>
+                        </a>
+                        <a href="{% url 'dashboard' %}" class="block w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition flex items-center">
+                            <svg class="w-5 h-5 mr-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            </svg>
+                            <span class="text-gray-700">Back to Dashboard</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call Now Modal -->
+<div id="callNowModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" onclick="closeModals(event)">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-2xl font-bold text-gray-900">Call Me Now</h3>
+            <button onclick="closeModals()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <p class="text-gray-600 mb-6">We'll call you within the next 2 minutes. Please keep your phone nearby.</p>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                </svg>
+                <div>
+                    <p class="text-sm font-semibold text-blue-900">Calling: {{ user.profile.phone_number|default:"Your Phone" }}</p>
+                    <p class="text-xs text-blue-700">From: +1 (978) 432-5124</p>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="initiateCallNow()" class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-3 px-6 rounded-lg transition flex items-center justify-center" id="callNowBtn">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            </svg>
+            Call Me Now
+        </button>
+    </div>
+</div>
+
+<!-- Schedule Later Modal -->
+<div id="scheduleModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" onclick="closeModals(event)">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-6" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-2xl font-bold text-gray-900">Schedule Your Call</h3>
+            <button onclick="closeModals()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="scheduleForm" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Date & Time</label>
+                {% render_field form.scheduled_time class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" %}
+                <p class="mt-1 text-xs text-gray-500">{{ form.scheduled_time.help_text }}</p>
+                <div class="text-red-600 text-sm mt-1" id="scheduled_time_error"></div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Custom Prompt (Optional)</label>
+                {% render_field form.custom_prompt class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="3" %}
+                <p class="mt-1 text-xs text-gray-500">{{ form.custom_prompt.help_text }}</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">First Message (Optional)</label>
+                {% render_field form.first_message class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="2" %}
+                <p class="mt-1 text-xs text-gray-500">{{ form.first_message.help_text }}</p>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg transition flex items-center justify-center" id="scheduleBtn">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Schedule Call
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Show/Hide Modals
+function showCallNowModal() {
+    {% if not user.profile.phone_number %}
+        alert('⚠️ Please add your phone number to your profile first.');
+        window.location.href = '{% url "profile" %}';
+        return;
+    {% endif %}
+    document.getElementById('callNowModal').classList.remove('hidden');
+    document.getElementById('callNowModal').classList.add('flex');
+}
+
+function showScheduleModal() {
+    {% if not user.profile.phone_number %}
+        alert('⚠️ Please add your phone number to your profile first.');
+        window.location.href = '{% url "profile" %}';
+        return;
+    {% endif %}
+    document.getElementById('scheduleModal').classList.remove('hidden');
+    document.getElementById('scheduleModal').classList.add('flex');
+}
+
+function closeModals(event) {
+    if (!event || event.target.id.includes('Modal')) {
+        document.getElementById('callNowModal').classList.add('hidden');
+        document.getElementById('callNowModal').classList.remove('flex');
+        document.getElementById('scheduleModal').classList.add('hidden');
+        document.getElementById('scheduleModal').classList.remove('flex');
+    }
+}
+
+// Call Now Function
+async function initiateCallNow() {
+    const btn = document.getElementById('callNowBtn');
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2 inline-block" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Initiating Call...';
+    
+    try {
+        // Get current time + 2 minutes
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 2);
+        const scheduledTime = now.toISOString().slice(0, 16);
+        
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('scheduled_time', scheduledTime);
+        formData.append('first_message', 'Namaste! This is MindMate AI calling. How are you feeling right now?');
+        
+        const response = await fetch('{% url "voice_calls:schedule" %}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ Great! We\'ll call you within 2 minutes at {{ user.profile.phone_number }}. Please keep your phone nearby!');
+            window.location.reload();
+        } else {
+            alert('❌ Error: ' + (data.error || 'Failed to schedule call'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Failed to initiate call. Please try again.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+// Schedule Form Submit
+document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const submitBtn = document.getElementById('scheduleBtn');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2 inline-block" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Scheduling...';
+    
+    // Clear errors
+    document.getElementById('scheduled_time_error').textContent = '';
+    
+    try {
+        const response = await fetch('{% url "voice_calls:schedule" %}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ Call scheduled successfully for ' + data.scheduled_time);
+            window.location.reload();
+        } else {
+            if (data.form_errors) {
+                for (const [field, errors] of Object.entries(data.form_errors)) {
+                    document.getElementById(field + '_error').textContent = errors.join(', ');
+                }
+            } else {
+                alert('❌ Error: ' + (data.error || 'Failed to schedule call'));
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Failed to schedule call. Please try again.');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+});
+
+// Cancel Call
+async function cancelCall(callId) {
+    if (!confirm('Are you sure you want to cancel this call?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{% url 'voice_calls:schedule' %}`.replace('schedule', `cancel/${callId}`), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ Call cancelled successfully');
+            window.location.reload();
+        } else {
+            alert('❌ Error: ' + (data.error || 'Failed to cancel call'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Failed to cancel call. Please try again.');
+    }
+}
+
+// Set minimum datetime to now
+document.addEventListener('DOMContentLoaded', () => {
+    const datetimeInput = document.querySelector('input[type="datetime-local"]');
+    if (datetimeInput) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        datetimeInput.min = now.toISOString().slice(0, 16);
+    }
+});
+</script>
+{% endblock %}

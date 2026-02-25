@@ -1,0 +1,282 @@
+# ============================================
+# MindMate AI - Complete Command Reference
+# ============================================
+
+# Project Path
+cd "C:\Users\Aryan.Kumar\OneDrive - Motherson Group\Desktop\MindMate-AI"
+
+# ============================================
+# 1. START REDIS (Portable Installation)
+# ============================================
+.\start-redis.ps1
+# OR manually:
+# C:\Users\Aryan.Kumar\redis\redis-server.exe
+
+# Verify Redis is running:
+# redis-cli ping
+# Expected: PONG
+
+# Stop Redis:
+.\stop-redis.ps1
+
+
+# ============================================
+# 2. START NGROK (Public Tunnel)
+# ============================================
+# Terminal: ngrok
+ngrok http 8000
+
+# Copy the https:// URL from output (e.g., https://xxxx-xxx-xxx-xxx-xxx.ngrok-free.app)
+# Update NGROK_URL in .env file
+# Update ALLOWED_HOSTS in .env to include the ngrok domain
+
+
+# ============================================
+# 3. START DAPHNE (Django ASGI Server)
+# ============================================
+# Terminal: daphne
+cd "C:\Users\Aryan.Kumar\OneDrive - Motherson Group\Desktop\MindMate-AI"
+.\venv\Scripts\Activate.ps1
+daphne -b 0.0.0.0 -p 8000 perplex.asgi:application
+
+# Access Django admin: http://localhost:8000/admin/
+# Access web interface: http://localhost:8000/
+
+
+# ============================================
+# 4. START CELERY WORKER
+# ============================================
+# Terminal: celery (worker)
+cd "C:\Users\Aryan.Kumar\OneDrive - Motherson Group\Desktop\MindMate-AI"
+.\venv\Scripts\Activate.ps1
+celery -A perplex worker -l info -P solo
+
+# Note: Use -P solo on Windows (required for Windows compatibility)
+
+
+# ============================================
+# 5. START CELERY BEAT (Task Scheduler)
+# ============================================
+# Terminal: celery (beat)
+cd "C:\Users\Aryan.Kumar\OneDrive - Motherson Group\Desktop\MindMate-AI"
+.\venv\Scripts\Activate.ps1
+celery -A perplex beat -l info
+
+
+# ============================================
+# QUICK START SEQUENCE
+# ============================================
+# 1. Start Redis: .\start-redis.ps1
+# 2. Start ngrok: ngrok http 8000
+# 3. Update .env with ngrok URL
+# 4. Start Daphne: daphne -b 0.0.0.0 -p 8000 perplex.asgi:application
+# 5. Start Celery Worker: celery -A perplex worker -l info -P solo
+# 6. Start Celery Beat: celery -A perplex beat -l info
+
+
+# ============================================
+# HELPER SCRIPTS
+# ============================================
+# Start all services:
+.\start-server.ps1
+
+# Start voice call system:
+.\start_voice_system.ps1
+
+# Update ngrok URL in .env:
+.\update-ngrok.ps1
+
+
+# ============================================
+# DJANGO MANAGEMENT COMMANDS
+# ============================================
+# Activate virtual environment first:
+.\venv\Scripts\Activate.ps1
+
+# Run migrations:
+python manage.py migrate
+
+# Create superuser:
+python manage.py createsuperuser
+
+# Collect static files:
+python manage.py collectstatic
+
+# Run development server (alternative to Daphne):
+python manage.py runserver 0.0.0.0:8000
+
+# Django shell:
+python manage.py shell
+
+# Create new app:
+python manage.py startapp app_name
+
+
+# ============================================
+# DATABASE COMMANDS
+# ============================================
+# Make migrations:
+python manage.py makemigrations
+
+# Apply migrations:
+python manage.py migrate
+
+# Show migrations:
+python manage.py showmigrations
+
+# Reset database (SQLite):
+# Remove db.sqlite3 file and run migrations again
+
+
+# ============================================
+# TWILIO VOICE CALL CONFIGURATION
+# ============================================
+# 1. Configure Twilio phone number webhook:
+#    Voice URL: https://your-ngrok-url.ngrok-free.app/voice/twiml/{schedule_id}/
+#    HTTP Method: POST
+
+# 2. Test TwiML endpoint:
+curl http://localhost:8000/voice/twiml/30/
+
+# 3. WebSocket endpoint for ElevenLabs streaming:
+#    wss://your-ngrok-url.ngrok-free.app/ws/media-stream/{schedule_id}/
+
+
+# ============================================
+# PROCESS MANAGEMENT
+# ============================================
+# Check running processes:
+Get-Process -Name "redis-server", "daphne", "celery", "python" | Select-Object ProcessName, Id
+
+# Stop specific process:
+Stop-Process -Name "daphne" -Force
+
+# Stop all Python processes:
+Get-Process -Name "python" | Stop-Process -Force
+
+# Stop Redis:
+.\stop-redis.ps1
+
+
+# ============================================
+# TESTING & DEBUGGING
+# ============================================
+# Test Redis connection:
+redis-cli ping
+
+# Test Django connection:
+Invoke-WebRequest -Uri http://localhost:8000 -UseBasicParsing
+
+# Test ngrok tunnel:
+Invoke-WebRequest -Uri https://your-ngrok-url.ngrok-free.app -UseBasicParsing
+
+# View Celery tasks:
+celery -A perplex inspect active
+
+# Django debug mode (check logs in terminal where Daphne is running)
+
+
+# ============================================
+# VIRTUAL ENVIRONMENT
+# ============================================
+# Activate:
+.\venv\Scripts\Activate.ps1
+
+# Deactivate:
+deactivate
+
+# Install package:
+pip install package-name
+
+# Install from requirements:
+pip install -r requirements.txt
+
+# Update requirements:
+pip freeze > requirements.txt
+
+
+# ============================================
+# GIT COMMANDS (Optional)
+# ============================================
+# Initialize git:
+git init
+
+# Check status:
+git status
+
+# Add files:
+git add .
+
+# Commit:
+git commit -m "Your commit message"
+
+# Push to remote:
+git push origin main
+
+
+# ============================================
+# ENVIRONMENT VARIABLES (.env)
+# ============================================
+# Key variables to configure:
+# - SECRET_KEY (Django secret key)
+# - DEBUG (True for development)
+# - ALLOWED_HOSTS (include ngrok domain)
+# - NGROK_URL (your ngrok HTTPS URL)
+# - REDIS_URL (redis://127.0.0.1:6379/0)
+# - TWILIO_ACCOUNT_SID
+# - TWILIO_AUTH_TOKEN
+# - TWILIO_PHONE_NUMBER
+# - ELEVENLABS_API_KEY
+# - ELEVENLABS_AGENT_ID
+
+
+# ============================================
+# TROUBLESHOOTING
+# ============================================
+
+# "Access denied" error:
+# - Run Redis from user directory (C:\Users\Aryan.Kumar\redis)
+# - Use portable installations (no admin rights needed)
+
+# "Port already in use":
+# - Check and stop conflicting processes:
+Get-Process | Where-Object {$_.ProcessName -match 'python|daphne'} | Stop-Process -Force
+
+# "Module not found" error:
+# - Ensure virtual environment is activated
+# - Reinstall dependencies: pip install -r requirements.txt
+
+# Celery not processing tasks:
+# - Ensure Redis is running
+# - Check CELERY_ALWAYS_EAGER=False in .env
+# - Restart Celery worker
+
+# WebSocket connection failed:
+# - Ensure ngrok is running and URL is updated in .env
+# - Restart Daphne after updating .env
+# - Check Django Channels configuration
+
+# Twilio "application error":
+# - Verify ngrok URL is correct in .env
+# - Check Twilio webhook configuration
+# - View Daphne logs for error details
+
+
+# ============================================
+# USEFUL URLS
+# ============================================
+# Django Admin: http://localhost:8000/admin/
+# Django App: http://localhost:8000/
+# ngrok Web Interface: http://127.0.0.1:4040
+# Celery Flower (if installed): http://localhost:5555/
+
+
+# ============================================
+# NOTES
+# ============================================
+# - Always start Redis before starting Django
+# - ngrok URL changes on every restart (free tier)
+# - Update .env and restart Daphne when ngrok URL changes
+# - Use -P solo flag for Celery on Windows
+# - WebSocket support requires ngrok (not LocalTunnel)
+# - ElevenLabs API requires valid API key and agent ID

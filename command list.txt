@@ -1,0 +1,22 @@
+# Run Redis in Docker
+docker run -d --name redis -p 6379:6379 redis:latest
+
+# Run with data persistence
+docker run -d --name redis -p 6379:6379 -v redis-data:/data redis:latest redis-server --appendonly yes
+
+ngrok http 8000
+# Copy the https:// URL and update NGROK_URL in .env
+
+cd E:\all-projects\MindMate-AI
+.\venv\Scripts\Activate.ps1
+python -m daphne -b 0.0.0.0 -p 8000 perplex.asgi:application
+
+cd E:\all-projects\MindMate-AI
+.\venv\Scripts\Activate.ps1
+celery -A perplex worker -l info -P solo
+
+
+cd E:\all-projects\MindMate-AI
+.\venv\Scripts\Activate.ps1
+celery -A perplex beat -l info
+

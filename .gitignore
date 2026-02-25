@@ -1,0 +1,50 @@
+# Environment Variables - NEVER commit these!
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+/static
+
+# Celery
+celerybeat-schedule
+celerybeat-schedule.dat
+celerybeat-schedule.bak
+celerybeat-schedule.dir
+
+# Redis
+dump.rdb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Distribution
+build/
+dist/
+*.egg-info/

@@ -1,0 +1,515 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Logic Puzzle - MindMate{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-orange-100 via-red-50 to-pink-100 py-12 px-4">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">🧩 Logic Puzzle</h1>
+      <p class="text-gray-600">Combine tiles to reach the goal! Difficulty: <span class="font-bold text-orange-600">{{ difficulty|title }}</span></p>
+    </div>
+
+    <!-- Game Stats -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+        <div class="bg-orange-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-orange-600" id="score">0</div>
+          <div class="text-sm text-gray-600 mt-1">Score</div>
+        </div>
+        <div class="bg-purple-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-purple-600" id="moves">0</div>
+          <div class="text-sm text-gray-600 mt-1">Moves</div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-green-600" id="best-tile">2</div>
+          <div class="text-sm text-gray-600 mt-1">Best Tile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goal Info -->
+    <div class="bg-white rounded-xl shadow-lg p-4 mb-8 text-center">
+      <div class="text-lg font-medium text-gray-700">
+        🎯 Goal: Reach the <span id="goal-display" class="font-bold text-orange-600">128</span> tile!
+      </div>
+    </div>
+
+    <!-- Game Board -->
+    <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+      <div id="game-board" class="grid gap-3 mx-auto bg-gray-200 rounded-lg p-3" style="width: fit-content;">
+        <!-- Tiles will be generated here -->
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6">
+      <p class="text-blue-700 font-medium">
+        💡 Use arrow keys (↑ ↓ ← →) to move tiles. When two tiles with the same number touch, they merge into one!
+      </p>
+    </div>
+
+    <!-- AI Hint Section -->
+    <div id="ai-hint-section" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-500 p-4 rounded mb-6">
+      <div class="flex items-start">
+        <div class="text-2xl mr-3">🤖</div>
+        <div>
+          <p class="font-medium text-orange-800 mb-2">AI Strategy Tip:</p>
+          <p class="text-orange-700" id="ai-hint-text"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="text-center space-x-4 flex flex-wrap justify-center gap-4">
+      <button id="ai-hint-btn" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+        🤖 AI Hint
+      </button>
+      <button id="restart-btn" class="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+        🔄 New Game
+      </button>
+      <a href="{% url 'games:mini_games_home' %}" class="inline-block bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+        ← Back to Games
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Victory Modal -->
+<div id="victory-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 transform transition-all">
+    <div class="text-center">
+      <div class="text-6xl mb-4">🏆</div>
+      <h2 class="text-3xl font-bold text-gray-800 mb-4">You Won!</h2>
+      <p class="text-gray-600 mb-6">You've reached the goal tile!</p>
+      
+      <div class="space-y-3 mb-6 text-left">
+        <div class="flex justify-between items-center bg-orange-50 rounded-lg p-3">
+          <span class="font-medium text-gray-700">Final Score:</span>
+          <span class="font-bold text-orange-600" id="final-score">0</span>
+        </div>
+        <div class="flex justify-between items-center bg-purple-50 rounded-lg p-3">
+          <span class="font-medium text-gray-700">Total Moves:</span>
+          <span class="font-bold text-purple-600" id="final-moves">0</span>
+        </div>
+        <div class="flex justify-between items-center bg-green-50 rounded-lg p-3">
+          <span class="font-medium text-gray-700">Best Tile:</span>
+          <span class="font-bold text-green-600" id="final-best">0</span>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <button id="continue-btn" class="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+          ✨ Continue Playing
+        </button>
+        <button id="new-game-btn" class="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+          🎮 New Game
+        </button>
+        <a href="{% url 'games:mini_games_home' %}" class="block w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 text-center">
+          ← Back to Games
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Game Over Modal -->
+<div id="gameover-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 transform transition-all">
+    <div class="text-center">
+      <div class="text-6xl mb-4">😢</div>
+      <h2 class="text-3xl font-bold text-gray-800 mb-4">Game Over!</h2>
+      <p class="text-gray-600 mb-6">No more moves available!</p>
+      
+      <div class="space-y-3 mb-6 text-left">
+        <div class="flex justify-between items-center bg-orange-50 rounded-lg p-3">
+          <span class="font-medium text-gray-700">Final Score:</span>
+          <span class="font-bold text-orange-600" id="gameover-score">0</span>
+        </div>
+        <div class="flex justify-between items-center bg-purple-50 rounded-lg p-3">
+          <span class="font-medium text-gray-700">Total Moves:</span>
+          <span class="font-bold text-purple-600" id="gameover-moves">0</span>
+        </div>
+        <div class="flex justify-between items-center bg-green-50 rounded-lg p-3">
+          <span class="font-medium text-gray-700">Best Tile:</span>
+          <span class="font-bold text-green-600" id="gameover-best">0</span>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <button id="try-again-btn" class="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+          🎮 Try Again
+        </button>
+        <a href="{% url 'games:mini_games_home' %}" class="block w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 text-center">
+          ← Back to Games
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .tile {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    transition: all 0.15s ease-in-out;
+  }
+
+  .tile-empty {
+    background: rgba(238, 228, 218, 0.35);
+  }
+
+  .tile-2 { background: #eee4da; color: #776e65; }
+  .tile-4 { background: #ede0c8; color: #776e65; }
+  .tile-8 { background: #f2b179; color: #f9f6f2; }
+  .tile-16 { background: #f59563; color: #f9f6f2; }
+  .tile-32 { background: #f67c5f; color: #f9f6f2; }
+  .tile-64 { background: #f65e3b; color: #f9f6f2; }
+  .tile-128 { background: #edcf72; color: #f9f6f2; font-size: 1.75rem; }
+  .tile-256 { background: #edcc61; color: #f9f6f2; font-size: 1.75rem; }
+  .tile-512 { background: #edc850; color: #f9f6f2; font-size: 1.75rem; }
+  .tile-1024 { background: #edc53f; color: #f9f6f2; font-size: 1.5rem; }
+  .tile-2048 { background: #edc22e; color: #f9f6f2; font-size: 1.5rem; }
+
+  .tile-new {
+    animation: appear 0.2s ease-in-out;
+  }
+
+  @keyframes appear {
+    from {
+      transform: scale(0);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+</style>
+
+<script>
+  const difficulty = "{{ difficulty }}";
+  const difficultySettings = {
+    'easy': { gridSize: 4, goal: 128 },
+    'medium': { gridSize: 4, goal: 512 },
+    'hard': { gridSize: 4, goal: 2048 }
+  };
+  
+  const settings = difficultySettings[difficulty];
+  const gridSize = settings.gridSize;
+  const goalTile = settings.goal;
+  
+  let grid = [];
+  let score = 0;
+  let moves = 0;
+  let bestTile = 2;
+  let gameWon = false;
+
+  // Initialize game
+  function initGame() {
+    grid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+    score = 0;
+    moves = 0;
+    bestTile = 2;
+    gameWon = false;
+    
+    document.getElementById('score').textContent = '0';
+    document.getElementById('moves').textContent = '0';
+    document.getElementById('best-tile').textContent = '2';
+    document.getElementById('goal-display').textContent = goalTile;
+    
+    // Add two initial tiles
+    addRandomTile();
+    addRandomTile();
+    
+    renderGrid();
+  }
+
+  // Add random tile (2 or 4)
+  function addRandomTile() {
+    const emptyCells = [];
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        if (grid[r][c] === 0) {
+          emptyCells.push({ r, c });
+        }
+      }
+    }
+    
+    if (emptyCells.length > 0) {
+      const { r, c } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+    }
+  }
+
+  // Render grid
+  function renderGrid() {
+    const gameBoard = document.getElementById('game-board');
+    gameBoard.style.gridTemplateColumns = `repeat(${gridSize}, 80px)`;
+    gameBoard.innerHTML = '';
+    
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        const value = grid[r][c];
+        const tile = document.createElement('div');
+        
+        if (value === 0) {
+          tile.className = 'tile tile-empty';
+        } else {
+          tile.className = `tile tile-${value}`;
+          tile.textContent = value;
+        }
+        
+        gameBoard.appendChild(tile);
+      }
+    }
+  }
+
+  // Move tiles
+  function move(direction) {
+    let moved = false;
+    const oldGrid = JSON.parse(JSON.stringify(grid));
+    
+    if (direction === 'left') {
+      for (let r = 0; r < gridSize; r++) {
+        const row = grid[r].filter(val => val !== 0);
+        for (let i = 0; i < row.length - 1; i++) {
+          if (row[i] === row[i + 1]) {
+            row[i] *= 2;
+            row.splice(i + 1, 1);
+            score += row[i];
+            bestTile = Math.max(bestTile, row[i]);
+          }
+        }
+        while (row.length < gridSize) row.push(0);
+        grid[r] = row;
+      }
+    } else if (direction === 'right') {
+      for (let r = 0; r < gridSize; r++) {
+        const row = grid[r].filter(val => val !== 0);
+        for (let i = row.length - 1; i > 0; i--) {
+          if (row[i] === row[i - 1]) {
+            row[i] *= 2;
+            row.splice(i - 1, 1);
+            score += row[i];
+            bestTile = Math.max(bestTile, row[i]);
+          }
+        }
+        while (row.length < gridSize) row.unshift(0);
+        grid[r] = row;
+      }
+    } else if (direction === 'up') {
+      for (let c = 0; c < gridSize; c++) {
+        const col = [];
+        for (let r = 0; r < gridSize; r++) {
+          if (grid[r][c] !== 0) col.push(grid[r][c]);
+        }
+        for (let i = 0; i < col.length - 1; i++) {
+          if (col[i] === col[i + 1]) {
+            col[i] *= 2;
+            col.splice(i + 1, 1);
+            score += col[i];
+            bestTile = Math.max(bestTile, col[i]);
+          }
+        }
+        while (col.length < gridSize) col.push(0);
+        for (let r = 0; r < gridSize; r++) {
+          grid[r][c] = col[r];
+        }
+      }
+    } else if (direction === 'down') {
+      for (let c = 0; c < gridSize; c++) {
+        const col = [];
+        for (let r = 0; r < gridSize; r++) {
+          if (grid[r][c] !== 0) col.push(grid[r][c]);
+        }
+        for (let i = col.length - 1; i > 0; i--) {
+          if (col[i] === col[i - 1]) {
+            col[i] *= 2;
+            col.splice(i - 1, 1);
+            score += col[i];
+            bestTile = Math.max(bestTile, col[i]);
+          }
+        }
+        while (col.length < gridSize) col.unshift(0);
+        for (let r = 0; r < gridSize; r++) {
+          grid[r][c] = col[r];
+        }
+      }
+    }
+    
+    // Check if grid changed
+    moved = JSON.stringify(oldGrid) !== JSON.stringify(grid);
+    
+    if (moved) {
+      moves++;
+      addRandomTile();
+      updateUI();
+      renderGrid();
+      
+      // Check for win
+      if (!gameWon && bestTile >= goalTile) {
+        gameWon = true;
+        setTimeout(showVictory, 500);
+      } else if (isGameOver()) {
+        setTimeout(showGameOver, 500);
+      }
+    }
+  }
+
+  // Update UI
+  function updateUI() {
+    document.getElementById('score').textContent = score;
+    document.getElementById('moves').textContent = moves;
+    document.getElementById('best-tile').textContent = bestTile;
+  }
+
+  // Check if game over
+  function isGameOver() {
+    // Check for empty cells
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        if (grid[r][c] === 0) return false;
+      }
+    }
+    
+    // Check for possible merges
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        const value = grid[r][c];
+        if ((r < gridSize - 1 && grid[r + 1][c] === value) ||
+            (c < gridSize - 1 && grid[r][c + 1] === value)) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }
+
+  // Show victory modal
+  function showVictory() {
+    document.getElementById('final-score').textContent = score;
+    document.getElementById('final-moves').textContent = moves;
+    document.getElementById('final-best').textContent = bestTile;
+    document.getElementById('victory-modal').classList.remove('hidden');
+    
+    saveScore(true);
+  }
+
+  // Show game over modal
+  function showGameOver() {
+    document.getElementById('gameover-score').textContent = score;
+    document.getElementById('gameover-moves').textContent = moves;
+    document.getElementById('gameover-best').textContent = bestTile;
+    document.getElementById('gameover-modal').classList.remove('hidden');
+    
+    saveScore(false);
+  }
+
+  // Save score
+  function saveScore(completed) {
+    fetch("{% url 'games:save_minigame_score' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        game_type: 'logic_puzzle',
+        difficulty: difficulty,
+        score: score,
+        time_taken: 0,
+        moves_count: moves,
+        completed: completed
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        console.log('Score saved successfully!');
+      }
+    })
+    .catch(error => console.error('Error saving score:', error));
+  }
+
+  // Keyboard controls
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+      
+      if (e.key === 'ArrowUp') move('up');
+      else if (e.key === 'ArrowDown') move('down');
+      else if (e.key === 'ArrowLeft') move('left');
+      else if (e.key === 'ArrowRight') move('right');
+    }
+  });
+
+  // Event listeners
+  document.getElementById('restart-btn').addEventListener('click', initGame);
+  document.getElementById('new-game-btn').addEventListener('click', () => {
+    document.getElementById('victory-modal').classList.add('hidden');
+    initGame();
+  });
+  document.getElementById('continue-btn').addEventListener('click', () => {
+    document.getElementById('victory-modal').classList.add('hidden');
+  });
+  document.getElementById('try-again-btn').addEventListener('click', () => {
+    document.getElementById('gameover-modal').classList.add('hidden');
+    initGame();
+  });
+
+  // AI Hint functionality
+  document.getElementById('ai-hint-btn').addEventListener('click', async () => {
+    const hintBtn = document.getElementById('ai-hint-btn');
+    const hintSection = document.getElementById('ai-hint-section');
+    const hintText = document.getElementById('ai-hint-text');
+    
+    hintBtn.disabled = true;
+    hintBtn.textContent = '🤖 Getting hint...';
+    
+    try {
+      const response = await fetch("{% url 'games:get_ai_hint' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          game_type: 'logic_puzzle',
+          difficulty: difficulty,
+          current_state: {
+            score: score,
+            moves: moves,
+            best_tile: bestTile
+          }
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        hintText.textContent = data.hint;
+        hintSection.classList.remove('hidden');
+        setTimeout(() => hintSection.classList.add('hidden'), 10000);
+      }
+    } catch (error) {
+      console.error('Error fetching AI hint:', error);
+      hintText.textContent = 'Keep your highest tile in a corner and build towards it systematically!';
+      hintSection.classList.remove('hidden');
+    }
+    
+    hintBtn.disabled = false;
+    hintBtn.textContent = '🤖 AI Hint';
+  });
+
+  // Initialize game
+  initGame();
+</script>
+{% endblock %}

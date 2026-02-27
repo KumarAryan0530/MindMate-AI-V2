@@ -16,9 +16,10 @@ from collections import Counter
 from app.forms import PHQ9Form, JournalForm, PrescriptionForm
 import cv2
 try:
-    from fer import FER
+    from deepface import DeepFace
+    DEEPFACE_AVAILABLE = True
 except ImportError:
-    FER = None  # FER not properly installed, features using it will be disabled
+    DEEPFACE_AVAILABLE = False
 from django.http import StreamingHttpResponse
 from django.urls import reverse
 import os
@@ -122,52 +123,205 @@ _camera_lock = asyncio.Lock()
 class VideoCamera:
     def __init__(self):
         self.video = cv2.VideoCapture(0)
-        self.emotion_detector = FER()
+        if not self.video.isOpened():
+            logger.error("Failed to open camera")
+            # Try to open camera with different backend
+            self.video = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # DirectShow for Windows
+        
+        if not self.video.isOpened():
+            logger.error("Camera still not available after trying DirectShow backend")
+        else:
+            # Optimize camera settings for real-time streaming
+            self.video.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Reduce buffer to minimize latency
+            self.video.set(cv2.CAP_PROP_FPS, 30)  # Set to 30 FPS
+            self.video.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Lower resolution for speed
+            self.video.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        
         self.is_running = False
+        self.frame_count = 0
+        self.emotion_history = []  # Store recent emotions for smoothing
+        self.max_history = 5  # Number of frames to average
+        self.last_emotion_result = None
 
     def __del__(self):
-        if self.video.isOpened():
+        if hasattr(self, 'video') and self.video.isOpened():
             self.video.release()
 
     def get_frame(self):
+        if not self.video.isOpened():
+            logger.error("Camera is not opened")
+            # Return a placeholder image indicating camera error
+            import numpy as np
+            error_img = np.zeros((480, 640, 3), dtype=np.uint8)
+            cv2.putText(error_img, 'Camera Not Available', (150, 240),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            ret, jpeg = cv2.imencode('.jpg', error_img)
+            return jpeg.tobytes() if ret else b''
+            
         success, image = self.video.read()
         if not success:
             logger.error("Failed to read frame from camera")
-            return b''
+            # Return a placeholder image
+            import numpy as np
+            error_img = np.zeros((480, 640, 3), dtype=np.uint8)
+            cv2.putText(error_img, 'Failed to read frame', (150, 240),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            ret, jpeg = cv2.imencode('.jpg', error_img)
+            return jpeg.tobytes() if ret else b''
             
-        emotions = self.emotion_detector.detect_emotions(image)
+        if DEEPFACE_AVAILABLE:
+            self.frame_count += 1
+            
+            # Process emotion detection every 15 frames for smooth real-time video
+            # This means analysis happens roughly every 0.5 seconds at 30fps
+            if self.frame_count % 15 == 0:
+                try:
+                    # Analyze emotions using DeepFace with faster detector
+                    result = DeepFace.analyze(
+                        image, 
+                        actions=['emotion'], 
+                        enforce_detection=False, 
+                        detector_backend='opencv',  # Faster detector for real-time
+                        silent=True
+                    )
+                    
+                    if result:
+                        # Handle both single result and list of results
+                        if isinstance(result, list):
+                            result = result[0]
+                        
+                        # Get all emotions
+                        emotions = result.get('emotion', {})
+                        if emotions:
+                            # Store emotions for temporal smoothing
+                            self.emotion_history.append(emotions)
+                            if len(self.emotion_history) > self.max_history:
+                                self.emotion_history.pop(0)
+                            
+                            # Average emotions over history
+                            averaged_emotions = {}
+                            for emotion_key in emotions.keys():
+                                avg = sum(e.get(emotion_key, 0) for e in self.emotion_history) / len(self.emotion_history)
+                                averaged_emotions[emotion_key] = avg
+                            
+                            # Get top 3 emotions
+                            sorted_emotions = sorted(averaged_emotions.items(), key=lambda x: x[1], reverse=True)
+                            top_emotions = sorted_emotions[:3]
+                            
+                            # Get face region
+                            region = result.get('region', {})
+                            x = region.get('x', 0)
+                            y = region.get('y', 0)
+                            w = region.get('w', 100)
+                            h = region.get('h', 100)
+                            
+                            # Store result for use in non-processing frames
+                            self.last_emotion_result = {
+                                'top_emotions': top_emotions,
+                                'region': (x, y, w, h),
+                                'dominant': top_emotions[0]
+                            }
+                            
+                except Exception as e:
+                    logger.error(f"Error detecting emotions: {e}")
+            
+            # Draw results (either fresh or from last successful detection)
+            if self.last_emotion_result:
+                try:
+                    top_emotions = self.last_emotion_result['top_emotions']
+                    x, y, w, h = self.last_emotion_result['region']
+                    dominant_emotion, dominant_conf = self.last_emotion_result['dominant']
+                    
+                    # Log detected emotion
+                    logger.info(f"Detected Emotion: {dominant_emotion} ({dominant_conf:.1f}%)")
+                    
+                    # Draw green rectangle around face (more pleasant)
+                    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 3)
+                    
+                    # Draw top 3 emotions with bars
+                    bar_y = y + h + 20
+                    for i, (emotion, conf) in enumerate(top_emotions):
+                        if conf < 5:  # Skip very low confidence emotions
+                            continue
+                            
+                        # Create emotion label
+                        label = f"{emotion}: {conf:.0f}%"
+                        
+                        # Draw background bar
+                        bar_width = int((conf / 100.0) * 200)
+                        bar_height = 20
+                        cv2.rectangle(image, (x, bar_y + i * 30), 
+                                    (x + 200, bar_y + i * 30 + bar_height), 
+                                    (50, 50, 50), -1)
+                        
+                        # Draw colored confidence bar
+                        if emotion in ['happy', 'surprise']:
+                            color = (0, 255, 0)  # Green for positive
+                        elif emotion in ['sad', 'angry', 'fear', 'disgust']:
+                            color = (0, 0, 255)  # Red for negative
+                        else:
+                            color = (255, 255, 0)  # Yellow for neutral
+                        
+                        cv2.rectangle(image, (x, bar_y + i * 30), 
+                                    (x + bar_width, bar_y + i * 30 + bar_height), 
+                                    color, -1)
+                        
+                        # Draw text
+                        cv2.putText(image, label, (x + 5, bar_y + i * 30 + 15),
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                    
+                except Exception as e:
+                    logger.error(f"Error drawing emotions: {e}")
+            else:
+                # No detection yet
+                cv2.putText(image, "Detecting face...", (10, 30),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+        else:
+            # DeepFace not available
+            cv2.putText(image, "Install deepface: pip install deepface", (10, 30),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-        for emotion in emotions:
-            (x, y, w, h) = emotion["box"]
-            dominant_emotion = max(emotion["emotions"], key=emotion["emotions"].get)
-            print(
-                f"Detected Emotion: {dominant_emotion}"
-            )  # Log detected emotion for debugging
-
-            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            cv2.putText(
-                image,
-                dominant_emotion,
-                (x, y - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.9,
-                (36, 255, 12),
-                2,
-            )
-
-        ret, jpeg = cv2.imencode(".jpg", image)
+        # Encode with lower quality for faster streaming
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 85]  # 85% quality (faster)
+        ret, jpeg = cv2.imencode(".jpg", image, encode_param)
         return jpeg.tobytes() if ret else b''
 
     def detect_emotions(self):
-        if not self.is_running:
+        """Get current dominant emotion using temporal smoothing"""
+        if not self.is_running or not DEEPFACE_AVAILABLE:
             return None
-        success, image = self.video.read()
-        emotions = self.emotion_detector.detect_emotions(image)
-        if emotions:
-            dominant_emotion = max(
-                emotions[0]["emotions"], key=emotions[0]["emotions"].get
-            )
+        
+        # If we have recent emotion history, return the averaged dominant emotion
+        if self.emotion_history:
+            # Average emotions over history
+            averaged_emotions = {}
+            for emotion_key in self.emotion_history[0].keys():
+                avg = sum(e.get(emotion_key, 0) for e in self.emotion_history) / len(self.emotion_history)
+                averaged_emotions[emotion_key] = avg
+            dominant_emotion = max(averaged_emotions, key=averaged_emotions.get)
             return dominant_emotion
+        
+        # Fallback: analyze current frame
+        success, image = self.video.read()
+        if not success:
+            return None
+        try:
+            result = DeepFace.analyze(
+                image, 
+                actions=['emotion'], 
+                enforce_detection=False,
+                detector_backend='opencv',  # Use faster detector
+                silent=True
+            )
+            if result:
+                if isinstance(result, list):
+                    result = result[0]
+                emotions = result.get('emotion', {})
+                if emotions:
+                    dominant_emotion = max(emotions, key=emotions.get)
+                    return dominant_emotion
+        except Exception as e:
+            logger.error(f"Error in detect_emotions: {e}")
         return None
 
     def start(self):
@@ -197,7 +351,7 @@ async def gen(camera):
         frame = await sync_to_async(camera.get_frame)()
         if frame:
             yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n")
-        await asyncio.sleep(0.033)  # ~30 FPS
+        await asyncio.sleep(0.01)  # Reduced sleep for smoother streaming
 
 
 async def video_feed(request):

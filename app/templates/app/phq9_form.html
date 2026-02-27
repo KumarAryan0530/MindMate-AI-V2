@@ -9,8 +9,20 @@
 <div class="mb-8 border-4 border-blue-50 rounded-xl overflow-hidden">
     <div class="bg-blue-50 p-3">
         <h2 class="text-lg font-semibold text-center text-blue-600">Live Facial Emotion Detection</h2>
+        <p id="camera-status" class="text-sm text-center text-gray-600 mt-1">Initializing camera...</p>
     </div>
-    <img id="video" src="{% url 'video_feed' %}" class="w-full h-[480px] object-cover rounded-lg" alt="Video Feed">
+    <div class="relative">
+        <img id="video" src="{% url 'video_feed' %}" class="w-full h-[480px] object-cover rounded-lg" alt="Video Feed">
+        <div id="loading-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
+            <div class="text-white text-center">
+                <svg class="animate-spin h-10 w-10 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p>Loading camera...</p>
+            </div>
+        </div>
+    </div>
 </div>
 
         <form method="POST" class="space-y-8">
@@ -40,4 +52,48 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videoElement = document.getElementById('video');
+    const statusElement = document.getElementById('camera-status');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    videoElement.addEventListener('load', function() {
+        // Video feed loaded successfully
+        loadingOverlay.style.display = 'none';
+        statusElement.textContent = 'Camera active - Emotion detection running';
+        statusElement.classList.remove('text-gray-600', 'text-red-600');
+        statusElement.classList.add('text-green-600');
+    });
+    
+    videoElement.addEventListener('error', function() {
+        retryCount++;
+        if (retryCount < maxRetries) {
+            statusElement.textContent = `Retrying camera connection... (${retryCount}/${maxRetries})`;
+            statusElement.classList.add('text-yellow-600');
+            // Retry loading after a delay
+            setTimeout(() => {
+                videoElement.src = videoElement.src.split('?')[0] + '?t=' + new Date().getTime();
+            }, 2000);
+        } else {
+            loadingOverlay.style.display = 'none';
+            statusElement.textContent = 'Camera unavailable. Please check permissions or refresh the page.';
+            statusElement.classList.remove('text-gray-600', 'text-green-600');
+            statusElement.classList.add('text-red-600');
+        }
+    });
+    
+    // Check if video is loading
+    setTimeout(function() {
+        if (loadingOverlay.style.display !== 'none') {
+            statusElement.textContent = 'Camera is taking longer than expected...';
+            statusElement.classList.add('text-yellow-600');
+        }
+    }, 3000);
+});
+</script>
+
 {% endblock %}

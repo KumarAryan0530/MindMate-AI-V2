@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Memory Match Game - MindMate{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 py-12 px-4">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">🧠 Memory Match</h1>
+      <p class="text-gray-600">Match all the cards to win! Difficulty: <span class="font-bold text-purple-600">{{ difficulty|title }}</span></p>
+    </div>
+
+    <!-- Game Stats -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+        <div class="bg-blue-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-blue-600" id="timer">00:00</div>
+          <div class="text-sm text-gray-600 mt-1">Time</div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-green-600" id="moves">0</div>
+          <div class="text-sm text-gray-600 mt-1">Moves</div>
+        </div>
+        <div class="bg-purple-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-purple-600" id="matches">0/<span id="total-pairs">0</span></div>
+          <div class="text-sm text-gray-600 mt-1">Matches</div>
+        </div>
+        <div class="bg-yellow-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-yellow-600" id="score">0</div>
+          <div class="text-sm text-gray-600 mt-1">Score</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Board -->
+    <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+      <div id="game-board" class="grid gap-4 mx-auto" style="max-width: fit-content;">
+        <!-- Cards will be generated here -->
+      </div>
+    </div>
+
+    <!-- AI Hint Section -->
+    <div id="ai-hint-section" class="hidden bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 p-4 rounded mb-6">
+      <div class="flex items-start">
+        <div class="text-2xl mr-3">🤖</div>
+        <div>
+          <p class="font-medium text-purple-800 mb-2">AI Coach Hint:</p>
+          <p class="text-purple-700" id="ai-hint-text"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="text-center space-x-4 flex flex-wrap justify-center gap-4">
+      <button id="ai-hint-btn" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+        🤖 AI Hint
+      </button>
+      <button id="restart-btn" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+        🔄 Restart Game
+      </button>
+      <a href="{% url 'games:mini_games_home' %}" class="inline-block bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+        ← Back to Games
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Victory Modal -->
+<div id="victory-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 transform transition-all">
+    <div class="text-center">
+      <div class="text-6xl mb-4">🎉</div>
+      <h2 class="text-3xl font-bold text-gray-800 mb-4">Congratulations!</h2>
+      <p class="text-gray-600 mb-6">You completed the game!</p>
+      
+      <div class="space-y-3 mb-6 text-left">
+        <div class="flex justify-between items-center bg-blue-50 rounded-lg p-3">
+          <span class="font-medium text-gray-700">Time:</span>
+          <span class="font-bold text-blue-600" id="final-time">00:00</span>
+        </div>
+        <div class="flex justify-between items-center bg-green-50 rounded-lg p-3">
+          <span class="font-medium text-gray-700">Moves:</span>
+          <span class="font-bold text-green-600" id="final-moves">0</span>
+        </div>
+        <div class="flex justify-between items-center bg-purple-50 rounded-lg p-3">
+          <span class="font-medium text-gray-700">Score:</span>
+          <span class="font-bold text-purple-600" id="final-score">0</span>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <button id="play-again-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+          🎮 Play Again
+        </button>
+        <a href="{% url 'games:mini_games_home' %}" class="block w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 text-center">
+          ← Back to Games
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .card {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+  }
+
+  .card.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .card.matched {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .card-front {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transform: rotateY(180deg);
+  }
+
+  .card-back {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+
+  .card-back::after {
+    content: '?';
+    font-size: 3rem;
+    font-weight: bold;
+    color: white;
+  }
+</style>
+
+<script>
+  const difficulty = "{{ difficulty }}";
+  const gridSizes = {
+    'easy': { rows: 4, cols: 4, pairs: 8 },
+    'medium': { rows: 6, cols: 6, pairs: 18 },
+    'hard': { rows: 8, cols: 8, pairs: 32 }
+  };
+  
+  // Ensure config is valid, default to medium if not
+  let config = gridSizes[difficulty];
+  if (!config) {
+    console.warn('Invalid difficulty:', difficulty, 'Defaulting to medium');
+    config = gridSizes['medium'];
+  }
+  
+  const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', 
+                  '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
+                  '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋',
+                  '🐌', '🐞', '🐜', '🦗', '🕷️', '🦂', '🐢', '🐍', '🦎', '🦖'];
+  
+  let cards = [];
+  let flippedCards = [];
+  let matchedPairs = 0;
+  let moves = 0;
+  let seconds = 0;
+  let timerInterval = null;
+  let gameStarted = false;
+
+  // Initialize game
+  function initGame() {
+    console.log('Initializing game with difficulty:', difficulty, 'config:', config);
+    
+    // Reset stats
+    matchedPairs = 0;
+    moves = 0;
+    seconds = 0;
+    gameStarted = false;
+    flippedCards = [];
+    
+    // Update UI
+    document.getElementById('moves').textContent = '0';
+    document.getElementById('matches').textContent = '0';
+    document.getElementById('total-pairs').textContent = config.pairs;
+    document.getElementById('timer').textContent = '00:00';
+    document.getElementById('score').textContent = '0';
+    
+    // Clear timer
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    
+    // Generate card pairs
+    const selectedEmojis = emojis.slice(0, config.pairs);
+    cards = [...selectedEmojis, ...selectedEmojis];
+    
+    // Shuffle cards
+    cards = cards.sort(() => Math.random() - 0.5);
+    
+    // Set grid layout
+    const gameBoard = document.getElementById('game-board');
+    gameBoard.style.gridTemplateColumns = `repeat(${config.cols}, 100px)`;
+    gameBoard.innerHTML = '';
+    
+    console.log('Creating', cards.length, 'cards with', config.cols, 'columns');
+    
+    // Create card elements
+    cards.forEach((emoji, index) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.index = index;
+      card.dataset.emoji = emoji;
+      
+      card.innerHTML = `
+        <div class="card-face card-back"></div>
+        <div class="card-face card-front">${emoji}</div>
+      `;
+      
+      card.addEventListener('click', () => flipCard(card));
+      gameBoard.appendChild(card);
+    });
+    
+    console.log('Game initialized successfully with', gameBoard.children.length, 'cards');
+  }
+
+  // Start timer
+  function startTimer() {
+    if (!gameStarted) {
+      gameStarted = true;
+      timerInterval = setInterval(() => {
+        seconds++;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        document.getElementById('timer').textContent = 
+          `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+  }
+
+  // Flip card
+  function flipCard(card) {
+    // Ignore if already flipped/matched or 2 cards already flipped
+    if (card.classList.contains('flipped') || 
+        card.classList.contains('matched') || 
+        flippedCards.length >= 2) {
+      return;
+    }
+    
+    // Start timer on first move
+    if (!gameStarted) {
+      startTimer();
+    }
+    
+    // Flip card
+    card.classList.add('flipped');
+    flippedCards.push(card);
+    
+    // Check for match if 2 cards flipped
+    if (flippedCards.length === 2) {
+      moves++;
+      document.getElementById('moves').textContent = moves;
+      
+      setTimeout(checkMatch, 800);
+    }
+  }
+
+  // Check if cards match
+  function checkMatch() {
+    const [card1, card2] = flippedCards;
+    
+    if (card1.dataset.emoji === card2.dataset.emoji) {
+      // Match!
+      card1.classList.add('matched');
+      card2.classList.add('matched');
+      matchedPairs++;
+      
+      document.getElementById('matches').textContent = matchedPairs;
+      updateScore();
+      
+      // Check if game won
+      if (matchedPairs === config.pairs) {
+        setTimeout(showVictory, 500);
+      }
+    } else {
+      // No match - flip back
+      card1.classList.remove('flipped');
+      card2.classList.remove('flipped');
+    }
+    
+    flippedCards = [];
+  }
+
+  // Calculate score
+  function updateScore() {
+    // Score = 1000 * matches - 10 * moves - seconds
+    const baseScore = 1000 * matchedPairs;
+    const movePenalty = 10 * moves;
+    const timePenalty = seconds;
+    const score = Math.max(0, baseScore - movePenalty - timePenalty);
+    
+    document.getElementById('score').textContent = score;
+  }
+
+  // Show victory modal
+  function showVictory() {
+    clearInterval(timerInterval);
+    
+    const finalTime = document.getElementById('timer').textContent;
+    const finalMoves = moves;
+    const finalScore = document.getElementById('score').textContent;
+    
+    document.getElementById('final-time').textContent = finalTime;
+    document.getElementById('final-moves').textContent = finalMoves;
+    document.getElementById('final-score').textContent = finalScore;
+    document.getElementById('victory-modal').classList.remove('hidden');
+    
+    // Save score to database
+    saveScore(finalScore, seconds, finalMoves);
+  }
+
+  // Save score via AJAX
+  function saveScore(score, time, moves) {
+    fetch("{% url 'games:save_minigame_score' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        game_type: 'memory_match',
+        difficulty: difficulty,
+        score: parseInt(score),
+        time_taken: time,
+        moves_count: moves,
+        completed: true
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        console.log('Score saved successfully!');
+      }
+    })
+    .catch(error => console.error('Error saving score:', error));
+  }
+
+  // Event listeners
+  document.getElementById('restart-btn').addEventListener('click', initGame);
+  document.getElementById('play-again-btn').addEventListener('click', () => {
+    document.getElementById('victory-modal').classList.add('hidden');
+    initGame();
+  });
+
+  // AI Hint functionality
+  document.getElementById('ai-hint-btn').addEventListener('click', async () => {
+    const hintBtn = document.getElementById('ai-hint-btn');
+    const hintSection = document.getElementById('ai-hint-section');
+    const hintText = document.getElementById('ai-hint-text');
+    
+    // Disable button temporarily
+    hintBtn.disabled = true;
+    hintBtn.textContent = '🤖 Getting hint...';
+    
+    try {
+      const response = await fetch("{% url 'games:get_ai_hint' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          game_type: 'memory_match',
+          difficulty: difficulty,
+          current_state: {
+            moves: moves,
+            matches: matchedPairs,
+            time: seconds
+          }
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        hintText.textContent = data.hint;
+        hintSection.classList.remove('hidden');
+        
+        // Hide hint after 10 seconds
+        setTimeout(() => {
+          hintSection.classList.add('hidden');
+        }, 10000);
+      }
+    } catch (error) {
+      console.error('Error fetching AI hint:', error);
+      hintText.textContent = 'Keep focusing on one area at a time to build mental maps of card positions!';
+      hintSection.classList.remove('hidden');
+    }
+    
+    // Re-enable button
+    hintBtn.disabled = false;
+    hintBtn.textContent = '🤖 AI Hint';
+  });
+
+  // Initialize game on load
+  initGame();
+</script>
+{% endblock %}

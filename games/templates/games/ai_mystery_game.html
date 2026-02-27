@@ -1,0 +1,522 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Mystery Detective - MindMate{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 py-12 px-4">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-3">
+        🕵️ AI Mystery Detective
+      </h1>
+      <p class="text-gray-300 text-lg">
+        <span class="inline-block bg-purple-600 px-3 py-1 rounded-full text-sm font-semibold mr-2">AI POWERED</span>
+        Solve the case through questioning and deduction • <span class="font-bold text-yellow-400">{{ difficulty|title }}</span> Difficulty
+      </p>
+    </div>
+
+    <!-- Game Stats Bar -->
+    <div class="bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl shadow-2xl p-4 mb-6 border border-purple-500">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+        <div class="bg-gradient-to-br from-blue-900 to-blue-700 rounded-lg p-3">
+          <div class="text-2xl font-bold text-blue-300" id="timer">00:00</div>
+          <div class="text-xs text-gray-300 mt-1">⏱️ Time</div>
+        </div>
+        <div class="bg-gradient-to-br from-purple-900 to-purple-700 rounded-lg p-3">
+          <div class="text-2xl font-bold text-purple-300" id="questions-remaining">-</div>
+          <div class="text-xs text-gray-300 mt-1">❓ Questions Left</div>
+        </div>
+        <div class="bg-gradient-to-br from-green-900 to-green-700 rounded-lg p-3">
+          <div class="text-2xl font-bold text-green-300" id="clues-found">0</div>
+          <div class="text-xs text-gray-300 mt-1">🔍 Clues Found</div>
+        </div>
+        <div class="bg-gradient-to-br from-yellow-900 to-yellow-700 rounded-lg p-3">
+          <div class="text-2xl font-bold text-yellow-300" id="potential-score">0</div>
+          <div class="text-xs text-gray-300 mt-1">⭐ Potential Score</div>
+        </div>
+        <div class="bg-gradient-to-br from-red-900 to-red-700 rounded-lg p-3">
+          <div class="text-2xl font-bold text-red-300" id="difficulty-indicator">{{ difficulty|upper }}</div>
+          <div class="text-xs text-gray-300 mt-1">🎯 Mode</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="bg-gray-800 bg-opacity-70 backdrop-blur-md rounded-2xl shadow-2xl p-12 text-center border border-purple-500">
+      <div class="animate-spin text-6xl mb-4">🔄</div>
+      <h2 class="text-2xl font-bold text-white mb-4">AI is generating your mystery...</h2>
+      <p class="text-gray-300">Creating suspects, planting clues, and setting the scene...</p>
+      <div class="mt-6 w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full animate-pulse" style="width: 70%"></div>
+      </div>
+    </div>
+
+    <!-- Game Container (Hidden Initially) -->
+    <div id="game-container" class="hidden">
+      <!-- Mystery Scenario Card -->
+      <div class="bg-gray-800 bg-opacity-70 backdrop-blur-md rounded-2xl shadow-2xl p-8 mb-6 border border-red-600">
+        <div class="flex items-start mb-4">
+          <div class="text-5xl mr-4">🚨</div>
+          <div class="flex-1">
+            <h2 class="text-3xl font-bold text-red-400 mb-2" id="mystery-title">The Case</h2>
+            <div class="text-sm text-gray-400 mb-3">
+              <span class="mr-4">📍 <span id="mystery-location">Location</span></span>
+              <span>☠️ Victim: <span id="mystery-victim">Name</span></span>
+            </div>
+            <p class="text-gray-200 leading-relaxed" id="mystery-scenario">Loading mystery...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Left Column: Suspects -->
+        <div class="lg:col-span-1">
+          <div class="bg-gray-800 bg-opacity-70 backdrop-blur-md rounded-2xl shadow-2xl p-6 border border-yellow-600">
+            <h3 class="text-2xl font-bold text-yellow-400 mb-4 flex items-center">
+              👥 Suspects
+              <span class="ml-2 text-sm text-gray-400" id="suspect-count">(0)</span>
+            </h3>
+            <div id="suspects-container" class="space-y-3">
+              <!-- Suspect cards will be inserted here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle Column: Investigation -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Question Interface -->
+          <div class="bg-gray-800 bg-opacity-70 backdrop-blur-md rounded-2xl shadow-2xl p-6 border border-blue-600">
+            <h3 class="text-2xl font-bold text-blue-400 mb-4">🔎 Investigation</h3>
+            
+            <div class="mb-4">
+              <label class="block text-gray-300 mb-2 font-medium">Ask a question to investigate:</label>
+              <textarea 
+                id="question-input" 
+                rows="3"
+                placeholder="E.g., 'Where was John at the time of the incident?' or 'What was found at the crime scene?'"
+                class="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none resize-none"
+              ></textarea>
+            </div>
+            
+            <button 
+              id="ask-btn"
+              class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              🤖 Ask AI Detective
+            </button>
+
+            <!-- Investigation Log -->
+            <div id="investigation-log" class="mt-6 space-y-3 max-h-96 overflow-y-auto">
+              <!-- Q&A will be added here -->
+            </div>
+          </div>
+
+          <!-- Clues Section -->
+          <div class="bg-gray-800 bg-opacity-70 backdrop-blur-md rounded-2xl shadow-2xl p-6 border border-green-600">
+            <h3 class="text-2xl font-bold text-green-400 mb-4">🔍 Discovered Clues</h3>
+            <div id="clues-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <!-- Clue cards will be inserted here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accusation Section -->
+      <div class="bg-gradient-to-r from-red-900 to-orange-900 bg-opacity-70 backdrop-blur-md rounded-2xl shadow-2xl p-8 border-2 border-red-500">
+        <h3 class="text-3xl font-bold text-white mb-4 text-center">⚖️ Make Your Accusation</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-gray-200 mb-2 font-medium">Who is the culprit?</label>
+            <select 
+              id="accused-select"
+              class="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-red-500 focus:outline-none"
+            >
+              <option value="">Select a suspect...</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-gray-200 mb-2 font-medium">Your reasoning (optional):</label>
+            <textarea 
+              id="reasoning-input"
+              rows="3"
+              placeholder="Explain your deduction..."
+              class="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-600 focus:border-red-500 focus:outline-none resize-none"
+            ></textarea>
+          </div>
+        </div>
+        
+        <div class="mt-6 flex gap-4 justify-center">
+          <button 
+            id="solve-btn"
+            class="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-4 px-12 rounded-lg shadow-2xl transform transition duration-300 hover:scale-105 text-lg"
+          >
+            🎯 Solve the Mystery!
+          </button>
+        </div>
+      </div>
+
+      <!-- Back Button -->
+      <div class="text-center mt-6">
+        <a href="{% url 'games:mini_games_home' %}" class="inline-block bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition">
+          ← Back to Mini Games
+        </a>
+      </div>
+    </div>
+
+    <!-- Solution Modal -->
+    <div id="solution-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+      <div class="bg-gradient-to-br from-gray-900 to-purple-900 rounded-2xl shadow-2xl p-8 max-w-3xl w-full mx-4 transform transition-all border-2 border-yellow-500 max-h-[90vh] overflow-y-auto">
+        <div class="text-center mb-6">
+          <div class="text-7xl mb-4" id="result-emoji">🎉</div>
+          <h2 class="text-4xl font-bold mb-3" id="result-title">Case Closed!</h2>
+          <div class="text-6xl font-extrabold mb-2" id="final-score-display">
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">0</span>
+          </div>
+          <p class="text-gray-400 text-sm">Final Score</p>
+        </div>
+        
+        <div class="bg-gray-800 bg-opacity-50 rounded-xl p-6 mb-6">
+          <h3 class="text-xl font-bold text-yellow-400 mb-3">🕵️ AI Detective's Report:</h3>
+          <p class="text-gray-200 leading-relaxed mb-4" id="ai-feedback">Feedback here...</p>
+          
+          <div class="border-t border-gray-700 pt-4 mt-4">
+            <h4 class="text-lg font-bold text-green-400 mb-2">✅ The Solution:</h4>
+            <p class="text-gray-300 leading-relaxed" id="full-solution">Solution here...</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="bg-blue-900 bg-opacity-50 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-blue-300" id="final-time">00:00</div>
+            <div class="text-xs text-gray-400 mt-1">Time Taken</div>
+          </div>
+          <div class="bg-purple-900 bg-opacity-50 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-purple-300" id="final-questions">0</div>
+            <div class="text-xs text-gray-400 mt-1">Questions Asked</div>
+          </div>
+          <div class="bg-green-900 bg-opacity-50 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-300" id="final-clues">0</div>
+            <div class="text-xs text-gray-400 mt-1">Clues Found</div>
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <button id="play-again-btn" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+            🎮 New Mystery
+          </button>
+          <a href="{% url 'games:mini_games_home' %}" class="flex-1 text-center bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition">
+            ← Back to Games
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const difficulty = "{{ difficulty }}";
+  let currentMystery = null;
+  let questionsAsked = 0;
+  let maxQuestions = 0;
+  let seconds = 0;
+  let timerInterval = null;
+  let cluesDiscovered = new Set();
+
+  // Start timer
+  function startTimer() {
+    if (!timerInterval) {
+      timerInterval = setInterval(() => {
+        seconds++;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        document.getElementById('timer').textContent = 
+          `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        updatePotentialScore();
+      }, 1000);
+    }
+  }
+
+  // Update potential score display
+  function updatePotentialScore() {
+    if (!currentMystery) return;
+    const basePoints = currentMystery.points;
+    const efficiencyBonus = (maxQuestions - questionsAsked) * 20;
+    const timeBonus = Math.max(0, 50 - Math.floor(seconds / 10));
+    const potential = basePoints + efficiencyBonus + timeBonus;
+    document.getElementById('potential-score').textContent = potential;
+  }
+
+  // Load mystery
+  async function loadMystery() {
+    try {
+      const response = await fetch("{% url 'games:generate_mystery' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ difficulty: difficulty })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        currentMystery = data.mystery;
+        maxQuestions = currentMystery.max_questions;
+        
+        // Display mystery
+        document.getElementById('mystery-title').textContent = currentMystery.title;
+        document.getElementById('mystery-location').textContent = currentMystery.location;
+        document.getElementById('mystery-victim').textContent = currentMystery.victim;
+        document.getElementById('mystery-scenario').textContent = currentMystery.scenario;
+        document.getElementById('questions-remaining').textContent = maxQuestions;
+        document.getElementById('potential-score').textContent = currentMystery.points;
+        
+        // Display suspects
+        const suspectsContainer = document.getElementById('suspects-container');
+        const accusedSelect = document.getElementById('accused-select');
+        suspectsContainer.innerHTML = '';
+        accusedSelect.innerHTML = '<option value="">Select a suspect...</option>';
+        
+        document.getElementById('suspect-count').textContent = `(${currentMystery.suspects.length})`;
+        
+        currentMystery.suspects.forEach(suspect => {
+          // Add to suspects list
+          const suspectCard = document.createElement('div');
+          suspectCard.className = 'bg-gray-700 bg-opacity-50 p-4 rounded-lg border border-gray-600 hover:border-yellow-500 transition';
+          suspectCard.innerHTML = `
+            <div class="font-bold text-yellow-300 mb-1">${suspect.name}</div>
+            <div class="text-xs text-gray-400 mb-2">${suspect.role}</div>
+            <div class="text-sm text-gray-300 mb-1">
+              <span class="text-red-400">Motive:</span> ${suspect.motive}
+            </div>
+            <div class="text-sm text-gray-300">
+              <span class="text-blue-400">Alibi:</span> ${suspect.alibi}
+            </div>
+          `;
+          suspectsContainer.appendChild(suspectCard);
+          
+          // Add to dropdown
+          const option = document.createElement('option');
+          option.value = suspect.name;
+          option.textContent = suspect.name;
+          accusedSelect.appendChild(option);
+        });
+        
+        // Display clues
+        const cluesContainer = document.getElementById('clues-container');
+        cluesContainer.innerHTML = '';
+        
+        currentMystery.visible_clues.forEach((clue, index) => {
+          const clueCard = document.createElement('div');
+          clueCard.className = 'bg-gray-700 bg-opacity-50 p-3 rounded-lg border border-gray-600';
+          clueCard.innerHTML = `
+            <div class="text-sm text-gray-300">
+              <span class="text-green-400 font-bold">🔍 Clue ${index + 1}:</span> ${clue.description}
+            </div>
+          `;
+          cluesContainer.appendChild(clueCard);
+        });
+        
+        document.getElementById('clues-found').textContent = currentMystery.visible_clues.length;
+        
+        // Show game, hide loading
+        document.getElementById('loading-screen').classList.add('hidden');
+        document.getElementById('game-container').classList.remove('hidden');
+        
+        // Start timer
+        startTimer();
+      } else {
+        alert('Failed to load mystery: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error loading mystery:', error);
+      alert('Failed to load mystery. Please try again.');
+    }
+  }
+
+  // Ask question
+  document.getElementById('ask-btn').addEventListener('click', async () => {
+    const questionInput = document.getElementById('question-input');
+    const question = questionInput.value.trim();
+    
+    if (!question) {
+      alert('Please enter a question.');
+      return;
+    }
+    
+    if (questionsAsked >= maxQuestions) {
+      alert('No questions remaining! Make your accusation now.');
+      return;
+    }
+    
+    const askBtn = document.getElementById('ask-btn');
+    askBtn.disabled = true;
+    askBtn.textContent = '🤖 AI is investigating...';
+    
+    try {
+      const response = await fetch("{% url 'games:ask_mystery_question' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ 
+          question: question,
+          questions_asked: questionsAsked
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        questionsAsked++;
+        
+        // Add to investigation log
+        const log = document.getElementById('investigation-log');
+        const entry = document.createElement('div');
+        entry.className = 'bg-gray-700 bg-opacity-50 p-4 rounded-lg border border-gray-600';
+        entry.innerHTML = `
+          <div class="mb-2">
+            <span class="font-bold text-blue-400">Q${questionsAsked}:</span>
+            <span class="text-gray-300">${question}</span>
+          </div>
+          <div class="pl-6 border-l-2 border-purple-500">
+            <span class="font-bold text-purple-400">🤖 AI:</span>
+            <span class="text-gray-200">${data.answer}</span>
+          </div>
+        `;
+        log.appendChild(entry);
+        log.scrollTop = log.scrollHeight;
+        
+        // Update questions remaining
+        document.getElementById('questions-remaining').textContent = data.questions_remaining;
+        
+        // Clear input
+        questionInput.value = '';
+        
+        // Update potential score
+        updatePotentialScore();
+        
+        // Check if any new clue-related keywords mentioned
+        const keywords = ['found', 'discovered', 'evidence', 'clue', 'fingerprint', 'weapon', 'witness'];
+        const hasClueInfo = keywords.some(keyword => data.answer.toLowerCase().includes(keyword));
+        if (hasClueInfo && !cluesDiscovered.has(question)) {
+          cluesDiscovered.add(question);
+          document.getElementById('clues-found').textContent = parseInt(document.getElementById('clues-found').textContent) + 1;
+        }
+      } else {
+        alert(data.error || 'Failed to process question.');
+      }
+    } catch (error) {
+      console.error('Error asking question:', error);
+      alert('Failed to ask question. Please try again.');
+    }
+    
+    askBtn.disabled = false;
+    askBtn.textContent = '🤖 Ask AI Detective';
+  });
+
+  // Solve mystery
+  document.getElementById('solve-btn').addEventListener('click', async () => {
+    const accused = document.getElementById('accused-select').value;
+    const reasoning = document.getElementById('reasoning-input').value.trim();
+    
+    if (!accused) {
+      alert('Please select a suspect to accuse.');
+      return;
+    }
+    
+    if (!confirm(`Are you sure you want to accuse ${accused}? This will end the investigation.`)) {
+      return;
+    }
+    
+    // Stop timer
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    
+    const solveBtn = document.getElementById('solve-btn');
+    solveBtn.disabled = true;
+    solveBtn.textContent = '⏳ Evaluating...';
+    
+    try {
+      const response = await fetch("{% url 'games:solve_mystery' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ 
+          accused: accused,
+          reasoning: reasoning,
+          questions_used: questionsAsked,
+          time_taken: seconds
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Show result modal
+        const modal = document.getElementById('solution-modal');
+        
+        if (data.is_correct) {
+          document.getElementById('result-emoji').textContent = '🎉';
+          document.getElementById('result-title').textContent = 'Case Solved!';
+          document.getElementById('result-title').className = 'text-4xl font-bold mb-3 text-green-400';
+        } else {
+          document.getElementById('result-emoji').textContent = '❌';
+          document.getElementById('result-title').textContent = 'Wrong Suspect!';
+          document.getElementById('result-title').className = 'text-4xl font-bold mb-3 text-red-400';
+        }
+        
+        document.getElementById('final-score-display').innerHTML = 
+          `<span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">${data.score}</span>`;
+        document.getElementById('ai-feedback').textContent = data.feedback;
+        document.getElementById('full-solution').textContent = data.full_solution;
+        
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        document.getElementById('final-time').textContent = 
+          `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        document.getElementById('final-questions').textContent = questionsAsked;
+        document.getElementById('final-clues').textContent = cluesDiscovered.size;
+        
+        modal.classList.remove('hidden');
+      } else {
+        alert(data.error || 'Failed to evaluate solution.');
+        solveBtn.disabled = false;
+        solveBtn.textContent = '🎯 Solve the Mystery!';
+        if (timerInterval === null) startTimer();
+      }
+    } catch (error) {
+      console.error('Error solving mystery:', error);
+      alert('Failed to evaluate solution. Please try again.');
+      solveBtn.disabled = false;
+      solveBtn.textContent = '🎯 Solve the Mystery!';
+      if (timerInterval === null) startTimer();
+    }
+  });
+
+  // Play again
+  document.getElementById('play-again-btn').addEventListener('click', () => {
+    window.location.reload();
+  });
+
+  // Allow Enter key to submit question
+  document.getElementById('question-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      document.getElementById('ask-btn').click();
+    }
+  });
+
+  // Initialize game on load
+  loadMystery();
+</script>
+{% endblock %}

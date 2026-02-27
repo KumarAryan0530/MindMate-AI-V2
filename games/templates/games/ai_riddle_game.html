@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Riddle Challenge - MindMate{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 py-12 px-4">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">🤖 AI Riddle Challenge</h1>
+      <p class="text-gray-600">Solve AI-generated brain teasers! Difficulty: <span class="font-bold text-purple-600">{{ difficulty|title }}</span></p>
+    </div>
+
+    <!-- Game Stats -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+        <div class="bg-purple-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-purple-600" id="score">0</div>
+          <div class="text-sm text-gray-600 mt-1">Score</div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-green-600" id="solved">0</div>
+          <div class="text-sm text-gray-600 mt-1">Solved</div>
+        </div>
+        <div class="bg-yellow-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-yellow-600" id="hints-used">0</div>
+          <div class="text-sm text-gray-600 mt-1">Hints Used</div>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-4">
+          <div class="text-3xl font-bold text-blue-600" id="streak">0</div>
+          <div class="text-sm text-gray-600 mt-1">Streak</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Riddle Card -->
+    <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+      <div id="loading-state" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
+        <p class="text-gray-600">AI is generating your riddle...</p>
+      </div>
+
+      <div id="riddle-state" class="hidden">
+        <!-- Riddle Question -->
+        <div class="mb-6">
+          <div class="flex items-start space-x-3">
+            <div class="text-4xl">🤔</div>
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-gray-800 mb-2">Riddle #{<span id="riddle-number">1</span>}</h3>
+              <p class="text-gray-700 text-lg leading-relaxed" id="riddle-text"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hints Section -->
+        <div id="hints-section" class="mb-6 hidden">
+          <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+            <div class="flex items-start">
+              <div class="text-2xl mr-3">💡</div>
+              <div>
+                <p class="font-medium text-yellow-800 mb-2">Hint:</p>
+                <p class="text-yellow-700" id="current-hint"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Answer Input -->
+        <div class="mb-6">
+          <label class="block text-gray-700 font-medium mb-2">Your Answer:</label>
+          <input
+            type="text"
+            id="answer-input"
+            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-lg"
+            placeholder="Type your answer here..."
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Feedback -->
+        <div id="feedback-section" class="hidden mb-6"></div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-4">
+          <button
+            id="hint-btn"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105"
+          >
+            💡 Get Hint (<span id="hints-left">3</span> left)
+          </button>
+          <button
+            id="submit-btn"
+            class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105"
+          >
+            ✓ Submit Answer
+          </button>
+        </div>
+
+        <!-- Next Riddle Button (hidden initially) -->
+        <button
+          id="next-btn"
+          class="hidden w-full mt-4 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105"
+        >
+          ➡️ Next Riddle
+        </button>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="text-center space-x-4">
+      <button id="new-game-btn" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+        🎮 New Game
+      </button>
+      <a href="{% url 'games:mini_games_home' %}" class="inline-block bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+        ← Back to Games
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const difficulty = "{{ difficulty }}";
+  const csrfToken = "{{ csrf_token }}";
+  
+  let currentRiddle = null;
+  let score = 0;
+  let solved = 0;
+  let hintsUsed = 0;
+  let streak = 0;
+  let riddleNumber = 1;
+  let hintsLeft = 3;
+  let availableHints = [];
+
+  // Load new riddle
+  async function loadNewRiddle() {
+    document.getElementById('loading-state').classList.remove('hidden');
+    document.getElementById('riddle-state').classList.add('hidden');
+    document.getElementById('feedback-section').classList.add('hidden');
+    document.getElementById('hints-section').classList.add('hidden');
+    document.getElementById('next-btn').classList.add('hidden');
+    document.getElementById('answer-input').value = '';
+    document.getElementById('answer-input').disabled = false;
+    document.getElementById('submit-btn').disabled = false;
+    
+    hintsLeft = 3;
+    document.getElementById('hints-left').textContent = hintsLeft;
+    
+    try {
+      const response = await fetch("{% url 'games:generate_ai_riddle' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+          difficulty: difficulty,
+          category: 'general'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        currentRiddle = data.riddle;
+        availableHints = currentRiddle.hints || [];
+        
+        document.getElementById('riddle-number').textContent = riddleNumber;
+        document.getElementById('riddle-text').textContent = currentRiddle.riddle;
+        
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('riddle-state').classList.remove('hidden');
+        document.getElementById('answer-input').focus();
+      }
+    } catch (error) {
+      console.error('Error loading riddle:', error);
+      showFeedback('Error loading riddle. Please try again.', 'error');
+    }
+  }
+
+  // Show hint
+  document.getElementById('hint-btn').addEventListener('click', () => {
+    if (hintsLeft > 0 && availableHints.length > 0) {
+      const hintIndex = 3 - hintsLeft;
+      if (hintIndex < availableHints.length) {
+        document.getElementById('current-hint').textContent = availableHints[hintIndex];
+        document.getElementById('hints-section').classList.remove('hidden');
+        
+        hintsLeft--;
+        hintsUsed++;
+        document.getElementById('hints-left').textContent = hintsLeft;
+        document.getElementById('hints-used').textContent = hintsUsed;
+        
+        if (hintsLeft === 0) {
+          document.getElementById('hint-btn').disabled = true;
+          document.getElementById('hint-btn').classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      }
+    }
+  });
+
+  // Submit answer
+  async function submitAnswer() {
+    const userAnswer = document.getElementById('answer-input').value.trim();
+    
+    if (!userAnswer) {
+      showFeedback('Please enter an answer!', 'warning');
+      return;
+    }
+    
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('answer-input').disabled = true;
+    
+    try {
+      const response = await fetch("{% url 'games:check_riddle_answer' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+          answer: userAnswer,
+          correct_answer: currentRiddle.answer,
+          riddle: currentRiddle.riddle
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.is_correct) {
+        // Correct answer!
+        const points = currentRiddle.difficulty_points * Math.pow(0.7, 3 - hintsLeft);
+        score += Math.floor(points);
+        solved++;
+        streak++;
+        
+        updateStats();
+        showFeedback(
+          `🎉 ${data.feedback}<br><br><strong>Explanation:</strong> ${currentRiddle.explanation}<br><strong>Points earned:</strong> +${Math.floor(points)}`,
+          'success'
+        );
+        document.getElementById('next-btn').classList.remove('hidden');
+      } else {
+        // Wrong answer
+        streak = 0;
+        document.getElementById('streak').textContent = streak;
+        showFeedback(`❌ ${data.feedback}<br><br><strong>Correct answer:</strong> ${currentRiddle.answer}<br><strong>Explanation:</strong> ${currentRiddle.explanation}`, 'error');
+        document.getElementById('next-btn').classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Error checking answer:', error);
+      showFeedback('Error checking answer. Please try again.', 'error');
+      document.getElementById('submit-btn').disabled = false;
+      document.getElementById('answer-input').disabled = false;
+    }
+  }
+
+  // Show feedback
+  function showFeedback(message, type) {
+    const feedbackSection = document.getElementById('feedback-section');
+    const colors = {
+      success: 'bg-green-50 border-green-500 text-green-800',
+      error: 'bg-red-50 border-red-500 text-red-800',
+      warning: 'bg-yellow-50 border-yellow-500 text-yellow-800'
+    };
+    
+    feedbackSection.innerHTML = `
+      <div class="border-l-4 ${colors[type]} p-4 rounded">
+        <p>${message}</p>
+      </div>
+    `;
+    feedbackSection.classList.remove('hidden');
+  }
+
+  // Update stats
+  function updateStats() {
+    document.getElementById('score').textContent = score;
+    document.getElementById('solved').textContent = solved;
+    document.getElementById('streak').textContent = streak;
+  }
+
+  // Event listeners
+  document.getElementById('submit-btn').addEventListener('click', submitAnswer);
+  document.getElementById('answer-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      submitAnswer();
+    }
+  });
+
+  document.getElementById('next-btn').addEventListener('click', () => {
+    riddleNumber++;
+    loadNewRiddle();
+  });
+
+  document.getElementById('new-game-btn').addEventListener('click', () => {
+    score = 0;
+    solved = 0;
+    hintsUsed = 0;
+    streak = 0;
+    riddleNumber = 1;
+    updateStats();
+    loadNewRiddle();
+  });
+
+  // Load first riddle on page load
+  loadNewRiddle();
+</script>
+{% endblock %}

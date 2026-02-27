@@ -22,7 +22,7 @@
         <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-6">
           <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold text-white">🎯 Mini Games</h2>
-            <span class="bg-white/20 text-white px-3 py-1 rounded-full text-sm">Coming Soon</span>
+            <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm animate-pulse">Available</span>
           </div>
         </div>
         <div class="p-8">
@@ -31,30 +31,39 @@
               Exciting mini-games to test your reflexes, memory, and problem-solving skills!
             </p>
             <div class="space-y-3">
-              <div class="flex items-center text-gray-500">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <div class="flex items-center text-gray-700">
+                <svg class="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                 </svg>
                 Memory matching games
               </div>
-              <div class="flex items-center text-gray-500">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <div class="flex items-center text-gray-700">
+                <svg class="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                 </svg>
                 Pattern recognition
               </div>
-              <div class="flex items-center text-gray-500">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <div class="flex items-center text-gray-700">
+                <svg class="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                 </svg>
                 Logic puzzles
               </div>
             </div>
           </div>
-          <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-            <p class="text-blue-700 font-medium">
-              🚀 This feature will be available soon! Stay tuned for exciting cognitive games.
-            </p>
+          
+          <!-- Quick Actions -->
+          <div class="space-y-3">
+            <a href="{% url 'games:mini_games_home' %}" class="block">
+              <button class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+                🎮 Play Mini Games
+              </button>
+            </a>
+            <a href="{% url 'games:minigame_leaderboard' %}" class="block">
+              <button class="w-full bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-3 px-6 rounded-lg transform transition duration-300 hover:-translate-y-1">
+                🏆 Leaderboard
+              </button>
+            </a>
           </div>
         </div>
       </div>

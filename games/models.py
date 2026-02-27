@@ -162,3 +162,76 @@ class UsedQuestion(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.genre} - Q:{self.question_hash[:8]}"
+
+
+# Mini Games Models
+class MiniGameScore(models.Model):
+    """Base model for tracking mini game scores"""
+    GAME_TYPES = [
+        ('memory_match', 'Memory Match'),
+        ('pattern_recognition', 'Pattern Recognition'),
+        ('logic_puzzle', 'Logic Puzzle'),
+    ]
+    
+    DIFFICULTY_LEVELS = [
+        ('easy', 'Easy'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='minigame_scores')
+    game_type = models.CharField(max_length=50, choices=GAME_TYPES)
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_LEVELS, default='medium')
+    score = models.IntegerField(default=0)
+    time_taken = models.FloatField(help_text="Time in seconds")
+    moves_count = models.IntegerField(default=0)
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-score', 'time_taken']
+        indexes = [
+            models.Index(fields=['user', 'game_type']),
+            models.Index(fields=['-score']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_game_type_display()} - Score: {self.score}"
+
+
+class MiniGameLeaderboard(models.Model):
+    """Leaderboard for mini games"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='minigame_leaderboard')
+    game_type = models.CharField(max_length=50, choices=MiniGameScore.GAME_TYPES)
+    total_games = models.IntegerField(default=0)
+    total_score = models.IntegerField(default=0)
+    highest_score = models.IntegerField(default=0)
+    average_score = models.FloatField(default=0.0)
+    best_time = models.FloatField(null=True, blank=True)
+    total_time_played = models.FloatField(default=0.0)
+    last_played = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['user', 'game_type']
+        ordering = ['-total_score', '-highest_score']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_game_type_display()}"
+    
+    def update_stats(self):
+        """Update leaderboard stats based on user's game scores"""
+        scores = MiniGameScore.objects.filter(
+            user=self.user,
+            game_type=self.game_type,
+            completed=True
+        )
+        
+        self.total_games = scores.count()
+        if self.total_games > 0:
+            self.total_score = sum(s.score for s in scores)
+            self.highest_score = max(s.score for s in scores)
+            self.average_score = self.total_score / self.total_games
+            self.best_time = min(s.time_taken for s in scores)
+            self.total_time_played = sum(s.time_taken for s in scores)
+        
+        self.save()

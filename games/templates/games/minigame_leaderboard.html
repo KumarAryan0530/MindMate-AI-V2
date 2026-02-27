@@ -1,0 +1,595 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mini Games Leaderboard - MindMate{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-yellow-100 via-orange-50 to-red-100 py-12 px-4">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">🏆 Mini Games Leaderboard</h1>
+      <p class="text-gray-600">Top players across all mini games</p>
+    </div>
+
+    <!-- Game Type Selector -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="flex flex-wrap justify-center gap-4">
+        <button onclick="showLeaderboard('memory_match')" 
+                class="game-tab px-6 py-3 rounded-lg font-medium transition-all duration-300 bg-purple-600 text-white shadow-lg" 
+                data-game="memory_match">
+          🧠 Memory Match
+        </button>
+        <button onclick="showLeaderboard('pattern_recognition')" 
+                class="game-tab px-6 py-3 rounded-lg font-medium transition-all duration-300 bg-gray-200 text-gray-700 hover:bg-gray-300" 
+                data-game="pattern_recognition">
+          🎯 Pattern Recognition
+        </button>
+        <button onclick="showLeaderboard('logic_puzzle')" 
+                class="game-tab px-6 py-3 rounded-lg font-medium transition-all duration-300 bg-gray-200 text-gray-700 hover:bg-gray-300" 
+                data-game="logic_puzzle">
+          🧩 Logic Puzzle
+        </button>
+        <button onclick="showLeaderboard('mystery_detective')" 
+                class="game-tab px-6 py-3 rounded-lg font-medium transition-all duration-300 bg-gray-200 text-gray-700 hover:bg-gray-300" 
+                data-game="mystery_detective">
+          🕵️ Mystery Detective
+        </button>
+        <button onclick="showLeaderboard('story_adventure')" 
+                class="game-tab px-6 py-3 rounded-lg font-medium transition-all duration-300 bg-gray-200 text-gray-700 hover:bg-gray-300" 
+                data-game="story_adventure">
+          📖 Story Adventure
+        </button>
+      </div>
+    </div>
+
+    <!-- Memory Match Leaderboard -->
+    <div id="leaderboard-memory_match" class="leaderboard-section">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Easy Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-green-500 to-emerald-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Easy Mode</h3>
+          </div>
+          <div class="p-6">
+            {% if memory_match_easy %}
+              <div class="space-y-3">
+                {% for entry in memory_match_easy %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.total_games }} game(s)</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-green-600">{{ entry.highest_score }}</div>
+                    <div class="text-xs text-gray-500">⏱️ {{ entry.best_time }}s</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Medium Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-yellow-500 to-orange-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Medium Mode</h3>
+          </div>
+          <div class="p-6">
+            {% if memory_match_medium %}
+              <div class="space-y-3">
+                {% for entry in memory_match_medium %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.total_games }} game(s)</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-yellow-600">{{ entry.highest_score }}</div>
+                    <div class="text-xs text-gray-500">⏱️ {{ entry.best_time }}s</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Hard Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-red-500 to-pink-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Hard Mode</h3>
+          </div>
+          <div class="p-6">
+            {% if memory_match_hard %}
+              <div class="space-y-3">
+                {% for entry in memory_match_hard %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.total_games }} game(s)</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-red-600">{{ entry.highest_score }}</div>
+                    <div class="text-xs text-gray-500">⏱️ {{ entry.best_time }}s</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pattern Recognition Leaderboard -->
+    <div id="leaderboard-pattern_recognition" class="leaderboard-section hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Easy Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-green-500 to-emerald-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Easy Mode</h3>
+          </div>
+          <div class="p-6">
+            {% if pattern_recognition_easy %}
+              <div class="space-y-3">
+                {% for entry in pattern_recognition_easy %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.total_games }} game(s)</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-green-600">{{ entry.highest_score }}</div>
+                    <div class="text-xs text-gray-500">🎯 Avg: {{ entry.average_score|floatformat:0 }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Medium Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-yellow-500 to-orange-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Medium Mode</h3>
+          </div>
+          <div class="p-6">
+            {% if pattern_recognition_medium %}
+              <div class="space-y-3">
+                {% for entry in pattern_recognition_medium %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.total_games }} game(s)</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-yellow-600">{{ entry.highest_score }}</div>
+                    <div class="text-xs text-gray-500">🎯 Avg: {{ entry.average_score|floatformat:0 }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Hard Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-red-500 to-pink-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Hard Mode</h3>
+          </div>
+          <div class="p-6">
+            {% if pattern_recognition_hard %}
+              <div class="space-y-3">
+                {% for entry in pattern_recognition_hard %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.total_games }} game(s)</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-red-600">{{ entry.highest_score }}</div>
+                    <div class="text-xs text-gray-500">🎯 Avg: {{ entry.average_score|floatformat:0 }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logic Puzzle Leaderboard -->
+    <div id="leaderboard-logic_puzzle" class="leaderboard-section hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Easy Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-green-500 to-emerald-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Easy Mode (128 tile)</h3>
+          </div>
+          <div class="p-6">
+            {% if logic_puzzle_easy %}
+              <div class="space-y-3">
+                {% for entry in logic_puzzle_easy %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.total_games }} game(s)</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-green-600">{{ entry.highest_score }}</div>
+                    <div class="text-xs text-gray-500">🎯 Avg: {{ entry.average_score|floatformat:0 }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Medium Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-yellow-500 to-orange-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Medium Mode (512 tile)</h3>
+          </div>
+          <div class="p-6">
+            {% if logic_puzzle_medium %}
+              <div class="space-y-3">
+                {% for entry in logic_puzzle_medium %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.total_games }} game(s)</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-yellow-600">{{ entry.highest_score }}</div>
+                    <div class="text-xs text-gray-500">🎯 Avg: {{ entry.average_score|floatformat:0 }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Hard Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-red-500 to-pink-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Hard Mode (2048 tile)</h3>
+          </div>
+          <div class="p-6">
+            {% if logic_puzzle_hard %}
+              <div class="space-y-3">
+                {% for entry in logic_puzzle_hard %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.total_games }} game(s)</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-red-600">{{ entry.highest_score }}</div>
+                    <div class="text-xs text-gray-500">🎯 Avg: {{ entry.average_score|floatformat:0 }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mystery Detective Leaderboard -->
+    <div id="leaderboard-mystery_detective" class="leaderboard-section hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Easy Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-green-500 to-teal-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Easy Mode (3 suspects)</h3>
+          </div>
+          <div class="p-6">
+            {% if mystery_detective_easy %}
+              <div class="space-y-3">
+                {% for entry in mystery_detective_easy %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.moves_count }} questions</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-green-600">{{ entry.score }}</div>
+                    <div class="text-xs text-gray-500">⏱️ {{ entry.time_taken|floatformat:0 }}s</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Medium Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-yellow-500 to-orange-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Medium Mode (4 suspects)</h3>
+          </div>
+          <div class="p-6">
+            {% if mystery_detective_medium %}
+              <div class="space-y-3">
+                {% for entry in mystery_detective_medium %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.moves_count }} questions</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-yellow-600">{{ entry.score }}</div>
+                    <div class="text-xs text-gray-500">⏱️ {{ entry.time_taken|floatformat:0 }}s</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Hard Difficulty -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-red-500 to-pink-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Hard Mode (5 suspects)</h3>
+          </div>
+          <div class="p-6">
+            {% if mystery_detective_hard %}
+              <div class="space-y-3">
+                {% for entry in mystery_detective_hard %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.moves_count }} questions</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-red-600">{{ entry.score }}</div>
+                    <div class="text-xs text-gray-500">⏱️ {{ entry.time_taken|floatformat:0 }}s</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No scores yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Story Adventure Leaderboard -->
+    <div id="leaderboard-story_adventure" class="leaderboard-section hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Easy (Fantasy/Adventure) -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-green-500 to-teal-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Easy (Fantasy/Adventure)</h3>
+          </div>
+          <div class="p-6">
+            {% if story_adventure_easy %}
+              <div class="space-y-3">
+                {% for entry in story_adventure_easy %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.moves_count }} choices</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-green-600">{{ entry.score }}</div>
+                    <div class="text-xs text-gray-500">⏱️ {{ entry.time_taken|floatformat:0 }}s</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No stories yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Medium (Mystery/Sci-Fi) -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-yellow-500 to-orange-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Medium (Mystery/Sci-Fi)</h3>
+          </div>
+          <div class="p-6">
+            {% if story_adventure_medium %}
+              <div class="space-y-3">
+                {% for entry in story_adventure_medium %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.moves_count }} choices</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-yellow-600">{{ entry.score }}</div>
+                    <div class="text-xs text-gray-500">⏱️ {{ entry.time_taken|floatformat:0 }}s</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No stories yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Hard (Horror) -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-red-500 to-pink-500 p-4">
+            <h3 class="text-xl font-bold text-white text-center">Hard (Horror)</h3>
+          </div>
+          <div class="p-6">
+            {% if story_adventure_hard %}
+              <div class="space-y-3">
+                {% for entry in story_adventure_hard %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center space-x-3">
+                    <div class="text-2xl font-bold text-gray-400">#{{ forloop.counter }}</div>
+                    <div>
+                      <div class="font-medium text-gray-800">{{ entry.user.username }}</div>
+                      <div class="text-sm text-gray-500">{{ entry.moves_count }} choices</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xl font-bold text-red-600">{{ entry.score }}</div>
+                    <div class="text-xs text-gray-500">⏱️ {{ entry.time_taken|floatformat:0 }}s</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-gray-500 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No stories yet. Be the first!</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="text-center">
+      <a href="{% url 'games:mini_games_home' %}" class="inline-block bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition duration-300 hover:scale-105">
+        ← Back to Mini Games
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showLeaderboard(gameType) {
+    // Hide all leaderboards
+    document.querySelectorAll('.leaderboard-section').forEach(section => {
+      section.classList.add('hidden');
+    });
+    
+    // Show selected leaderboard
+    document.getElementById(`leaderboard-${gameType}`).classList.remove('hidden');
+    
+    // Update tab styles
+    document.querySelectorAll('.game-tab').forEach(tab => {
+      if (tab.dataset.game === gameType) {
+        tab.className = 'game-tab px-6 py-3 rounded-lg font-medium transition-all duration-300 bg-purple-600 text-white shadow-lg';
+      } else {
+        tab.className = 'game-tab px-6 py-3 rounded-lg font-medium transition-all duration-300 bg-gray-200 text-gray-700 hover:bg-gray-300';
+      }
+    });
+  }
+</script>
+{% endblock %}

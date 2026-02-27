@@ -1,36 +1,48 @@
-# Environment Variables - NEVER commit these!
-.env
-
 # Python
-__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
 
 # Django
 *.log
+local_settings.py
 db.sqlite3
 db.sqlite3-journal
-/media
-/staticfiles
-/static
+media/
+staticfiles/
 
-# Celery
-celerybeat-schedule
-celerybeat-schedule.dat
-celerybeat-schedule.bak
-celerybeat-schedule.dir
+# Environment Variables
+.env
+.env.local
+.env.*.local
 
-# Redis
-dump.rdb
-
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -38,13 +50,58 @@ dump.rdb
 *~
 .DS_Store
 
-# Testing
-.pytest_cache/
-.coverage
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Redis
+dump.rdb
+
+# Coverage reports
 htmlcov/
 .tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
 
-# Distribution
-build/
-dist/
-*.egg-info/
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk

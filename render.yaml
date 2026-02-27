@@ -1,0 +1,140 @@
+# Render.yaml - Infrastructure as Code for MindMate-AI
+# This file defines all services needed for deployment
+
+services:
+  # Main Web Application
+  - type: web
+    name: mindmate-web
+    env: python
+    region: oregon # Free tier region
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT perplex.asgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mindmate-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: mindmate-redis
+          type: redis
+          property: connectionString
+      - key: USE_REDIS
+        value: True
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CLOUDFLARE_API_TOKEN
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_AGENT_ID
+        sync: false
+
+  # Celery Worker for Background Tasks
+  - type: worker
+    name: mindmate-celery-worker
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "celery -A perplex worker --loglevel=info --concurrency=2"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        fromService:
+          name: mindmate-web
+          type: web
+          envVarKey: SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mindmate-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: mindmate-redis
+          type: redis
+          property: connectionString
+      - key: USE_REDIS
+        value: True
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CLOUDFLARE_API_TOKEN
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_AGENT_ID
+        sync: false
+
+  # Celery Beat for Scheduled Tasks
+  - type: worker
+    name: mindmate-celery-beat
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "celery -A perplex beat --loglevel=info"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        fromService:
+          name: mindmate-web
+          type: web
+          envVarKey: SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mindmate-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: mindmate-redis
+          type: redis
+          property: connectionString
+      - key: USE_REDIS
+        value: True
+
+# Databases
+databases:
+  - name: mindmate-db
+    region: oregon
+    plan: free
+    databaseName: mindmate
+    user: mindmate
+
+# Redis Instance
+  - name: mindmate-redis
+    region: oregon
+    plan: free
+    maxmemoryPolicy: allkeys-lru

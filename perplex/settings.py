@@ -244,15 +244,20 @@ NGROK_URL = os.getenv('NGROK_URL', '')
 
 # Security Settings for Production
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # Trust X-Forwarded-Proto header from proxy (Render, Railway, etc.)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # Don't force SSL redirect - let the proxy handle it
+    # SECURE_SSL_REDIRECT = True  # Commented out to prevent redirect loops
+    
+    # Secure cookies
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    
+    # Security headers
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
 
 # CSRF Trusted Origins (for production)
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else []
